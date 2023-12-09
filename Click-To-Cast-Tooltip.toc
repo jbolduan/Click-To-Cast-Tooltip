@@ -1,0 +1,7 @@
+## Interface: 100200
+## Title: Click to Cast Tooltip
+## Author: theGimpboy
+## Version: 1.0
+## Notes: Adds the click to cast spells and macros to the tooltip.
+
+Click-To-Cast-Tooltip.lua
