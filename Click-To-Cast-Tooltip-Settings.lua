@@ -65,7 +65,7 @@ function f:InitializeOptions()
     buttonColorPicker:SetText("Button Text Color")
     buttonColorPicker:SetScript("OnClick", function()
         ShowColorPicker(addonTable.db.buttonColor.r, addonTable.db.buttonColor.g, addonTable.db.buttonColor.b,
-            addonTable.db.buttonColor.a, ColorCallback)
+            addonTable.db.buttonColor.a, ButtonColorCallback)
     end)
 
     -- Create a button which will allow the user to change the color of the action text.
@@ -75,7 +75,7 @@ function f:InitializeOptions()
     actionColorPicker:SetText("Action Text Color")
     actionColorPicker:SetScript("OnClick", function()
         ShowColorPicker(addonTable.db.actionColor.r, addonTable.db.actionColor.g, addonTable.db.actionColor.b,
-            addonTable.db.actionColor.a, ColorCallback)
+            addonTable.db.actionColor.a, ActionColorCallback)
     end)
 
     -- Create a button which will allow the user to reset the settings to the default values.
@@ -102,7 +102,7 @@ function ShowColorPicker(r, g, b, a, changedCallback)
 end
 
 -- Callback function to protect the color picker from no selection being made
-function ColorCallback(restore)
+function ButtonColorCallback(restore)
     local newR, newG, newB, newA
     if restore then
         -- The user bailed , we extreact the old color from the table created by ShowColorPicker.
@@ -113,6 +113,21 @@ function ColorCallback(restore)
     end
 
     addonTable.db.buttonColor.r, addonTable.db.buttonColor.g, addonTable.db.buttonColor.b, addonTable.db.buttonColor.a =
+        newR, newG, newB, newA
+    -- Update UI elements
+end
+
+function ActionColorCallback(restore)
+    local newR, newG, newB, newA
+    if restore then
+        -- The user bailed , we extreact the old color from the table created by ShowColorPicker.
+        newR, newG, newB, newA = unpack(restore)
+    else
+        -- Something changed
+        newA, newR, newG, newB = OpacitySliderFrame:GetValue(), ColorPickerFrame:GetColorRGB()
+    end
+
+    addonTable.db.actionColor.r, addonTable.db.actionColor.g, addonTable.db.actionColor.b, addonTable.db.actionColor.a =
         newR, newG, newB, newA
     -- Update UI elements
 end

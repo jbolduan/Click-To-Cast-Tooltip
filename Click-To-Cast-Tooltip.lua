@@ -38,29 +38,29 @@ function tooltipLine(binding, tooltip)
     end
 
     if (isShiftKeyDown and isAltKeyDown and isControlKeyDown) and (modifier == "ALT-SHIFT-CTRL") then
-        tooltip:AddLine(actionColor:WrapTextInColorCode(binding.button) .. " - " ..
-                            buttonColor:WrapTextInColorCode(actionName))
+        tooltip:AddLine(buttonColor:WrapTextInColorCode(binding.button) .. " - " ..
+                            actionColor:WrapTextInColorCode(actionName))
     elseif (isShiftKeyDown and isAltKeyDown) and (modifier == "ALT-SHIFT") and not isControlKeyDown then
-        tooltip:AddLine(actionColor:WrapTextInColorCode(binding.button) .. " - " ..
-                            buttonColor:WrapTextInColorCode(actionName))
+        tooltip:AddLine(buttonColor:WrapTextInColorCode(binding.button) .. " - " ..
+                            actionColor:WrapTextInColorCode(actionName))
     elseif (isControlKeyDown and isAltKeyDown) and (modifier == "ALT-CTRL") and not isShiftKeyDown then
-        tooltip:AddLine(actionColor:WrapTextInColorCode(binding.button) .. " - " ..
-                            buttonColor:WrapTextInColorCode(actionName))
+        tooltip:AddLine(buttonColor:WrapTextInColorCode(binding.button) .. " - " ..
+                            actionColor:WrapTextInColorCode(actionName))
     elseif (isShiftKeyDown and isControlKeyDown) and (modifier == "SHIFT-CTRL") and not isAltKeyDown then
-        tooltip:AddLine(actionColor:WrapTextInColorCode(binding.button) .. " - " ..
-                            buttonColor:WrapTextInColorCode(actionName))
+        tooltip:AddLine(buttonColor:WrapTextInColorCode(binding.button) .. " - " ..
+                            actionColor:WrapTextInColorCode(actionName))
     elseif isShiftKeyDown and (modifier == "SHIFT") and not (isAltKeyDown or isControlKeyDown) then
-        tooltip:AddLine(actionColor:WrapTextInColorCode(binding.button) .. " - " ..
-                            buttonColor:WrapTextInColorCode(actionName))
+        tooltip:AddLine(buttonColor:WrapTextInColorCode(binding.button) .. " - " ..
+                            actionColor:WrapTextInColorCode(actionName))
     elseif isAltKeyDown and (modifier == "ALT") and not (isShiftKeyDown or isControlKeyDown) then
-        tooltip:AddLine(actionColor:WrapTextInColorCode(binding.button) .. " - " ..
-                            buttonColor:WrapTextInColorCode(actionName))
+        tooltip:AddLine(buttonColor:WrapTextInColorCode(binding.button) .. " - " ..
+                            actionColor:WrapTextInColorCode(actionName))
     elseif isControlKeyDown and (modifier == "CTRL") and not (isShiftKeyDown or isAltKeyDown) then
-        tooltip:AddLine(actionColor:WrapTextInColorCode(binding.button) .. " - " ..
-                            buttonColor:WrapTextInColorCode(actionName))
+        tooltip:AddLine(buttonColor:WrapTextInColorCode(binding.button) .. " - " ..
+                            actionColor:WrapTextInColorCode(actionName))
     elseif (not isAltKeyDown and not isControlKeyDown and not isShiftKeyDown) and (modifier == "") then
-        tooltip:AddLine(actionColor:WrapTextInColorCode(binding.button) .. " - " ..
-                            buttonColor:WrapTextInColorCode(actionName))
+        tooltip:AddLine(buttonColor:WrapTextInColorCode(binding.button) .. " - " ..
+                            actionColor:WrapTextInColorCode(actionName))
     end
 end
 

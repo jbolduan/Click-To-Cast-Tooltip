@@ -1,7 +1,7 @@
 ## Interface: 100200
 ## Title: Click to Cast Tooltip
 ## Author: theGimpboy
-## Version: 1.1.1
+## Version: 1.1.2
 ## Notes: Adds the click to cast spells and macros to the tooltip.
 ## SavedVariables: ClickToCastTooltipDB
 
