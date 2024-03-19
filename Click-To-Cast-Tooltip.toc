@@ -1,4 +1,4 @@
-## Interface: 100205
+## Interface: 100206
 ## Title: Click to Cast Tooltip
 ## Author: theGimpboy
 ## Version: 1.2.0
