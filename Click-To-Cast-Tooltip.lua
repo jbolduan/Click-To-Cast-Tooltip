@@ -32,7 +32,9 @@ function tooltipLine(binding, tooltip)
             actionName = "Open Context Menu"
         end
     elseif binding.type == Enum.ClickBindingType.Spell then
-        actionName = GetSpellInfo(binding.actionID)
+        -- actionName = GetSpellInfo(binding.actionID)
+        actionName = C_Spell.GetSpellName(binding.actionID)
+
     elseif binding.type == Enum.ClickBindingType.Macro then
         actionName = GetMacroInfo(binding.actionID)
     end
