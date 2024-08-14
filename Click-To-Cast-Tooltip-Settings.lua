@@ -219,7 +219,6 @@ function ShowColorPicker(r, g, b, a, changedCallback)
         info.swatchFunc = changedCallback
         info.cancelFunc = changedCallback
         info.hasOpacity = (a ~= nil)
-        -- info.opacity = a
         info.previousValues = {r, g, b, a}
         info.r, info.g, info.b, info.opacity = r, g, b, a
         ColorPickerFrame:SetupColorPickerAndShow(info)
@@ -239,7 +238,6 @@ function ButtonColorCallback(restore)
 
     addonTable.db.buttonColor.r, addonTable.db.buttonColor.g, addonTable.db.buttonColor.b, addonTable.db.buttonColor.a =
         newR, newG, newB, newA
-    -- Update UI elements
 end
 
 function ActionColorCallback(restore)
@@ -254,7 +252,20 @@ function ActionColorCallback(restore)
 
     addonTable.db.actionColor.r, addonTable.db.actionColor.g, addonTable.db.actionColor.b, addonTable.db.actionColor.a =
         newR, newG, newB, newA
-    -- Update UI elements
+end
+
+function DividerColorCallback(restore)
+    local newR, newG, newB, newA
+    if restore then
+        -- The user bailed , we extreact the old color from the table created by ShowColorPicker.
+        newR, newG, newB, newA = unpack(restore)
+    else
+        -- Something changed
+        newA, newR, newG, newB = ColorPickerFrame:GetColorAlpha(), ColorPickerFrame:GetColorRGB()
+    end
+
+    addonTable.db.dividerColor.r, addonTable.db.dividerColor.g, addonTable.db.dividerColor.b = newR, newG, newB
+    addonTable.db.dividerColor.a = newA
 end
 
 -- Add the supported slash commands

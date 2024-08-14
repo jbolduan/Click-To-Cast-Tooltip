@@ -69,20 +69,22 @@ end
 -- Base tooltip handler which generates the tooltip by calling the various functions required.
 function ClickToCastTooltip_GenerateTooltip(tooltip)
     local clickBindings = C_ClickBindings.GetProfileInfo();
+    local dividerColor = CreateColor(addonTable.db.dividerColor.r, addonTable.db.dividerColor.g,
+        addonTable.db.dividerColor.b, addonTable.db.dividerColor.a)
 
     if (addonTable.db.showTooltip) then
         if (addonTable.db.showNewLineTop) then
             tooltip:AddLine(" ")
         end
         if (addonTable.db.showHeader) then
-            tooltip:AddLine("---------------------")
+            tooltip:AddLine(dividerColor:WrapTextInColorCode("---------------------"))
             tooltip:AddLine("Active Keybinds:")
         end
         for _, binding in ipairs(clickBindings) do
             tooltipLine(binding, tooltip)
         end
         if (addonTable.db.showFooter) then
-            tooltip:AddLine("---------------------")
+            tooltip:AddLine(dividerColor:WrapTextInColorCode("---------------------"))
         end
         if (addonTable.db.showNewLineBottom) then
             tooltip:AddLine(" ")
