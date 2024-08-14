@@ -70,12 +70,23 @@ end
 function ClickToCastTooltip_GenerateTooltip(tooltip)
     local clickBindings = C_ClickBindings.GetProfileInfo();
 
-    if (addonTable.db.showHeader) then
-        tooltip:AddLine("---------------------")
-        tooltip:AddLine("Active Keybinds:")
-    end
-    for _, binding in ipairs(clickBindings) do
-        tooltipLine(binding, tooltip)
+    if (addonTable.db.showTooltip) then
+        if (addonTable.db.showNewLineTop) then
+            tooltip:AddLine(" ")
+        end
+        if (addonTable.db.showHeader) then
+            tooltip:AddLine("---------------------")
+            tooltip:AddLine("Active Keybinds:")
+        end
+        for _, binding in ipairs(clickBindings) do
+            tooltipLine(binding, tooltip)
+        end
+        if (addonTable.db.showFooter) then
+            tooltip:AddLine("---------------------")
+        end
+        if (addonTable.db.showNewLineBottom) then
+            tooltip:AddLine(" ")
+        end
     end
 end
 
