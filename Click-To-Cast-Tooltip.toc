@@ -1,9 +1,13 @@
 ## Interface: 110002
 ## Title: Click to Cast Tooltip
 ## Author: theGimpboy
-## Version: 1.4.4
+## Version: 1.4.5
 ## Notes: Adds the click to cast spells and macros to the tooltip.
 ## SavedVariables: ClickToCastTooltipDB
+## X-Website: https://github.com/jbolduan/Click-To-Cast-Tooltip
+## X-Wago-ID: BKpqAyGE
+## X-WoWI-ID: 26824
+## DefaultState: Enabled
 
 Click-To-Cast-Tooltip-Settings.lua
 Click-To-Cast-Tooltip.lua
