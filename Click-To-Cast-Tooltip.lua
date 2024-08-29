@@ -20,10 +20,8 @@ function tooltipLine(binding, tooltip)
     local isAltKeyDown = IsAltKeyDown()
     local isControlKeyDown = IsControlKeyDown()
 
-    local buttonColor = CreateColor(addonTable.db.buttonColor.r, addonTable.db.buttonColor.g,
-        addonTable.db.buttonColor.b, addonTable.db.buttonColor.a)
-    local actionColor = CreateColor(addonTable.db.actionColor.r, addonTable.db.actionColor.g,
-        addonTable.db.actionColor.b, addonTable.db.actionColor.a)
+    local buttonColor = CreateColorFromHexString(ClickToCastTooltipDB.buttonColor)
+    local actionColor = CreateColorFromHexString(ClickToCastTooltipDB.actionColor)
 
     if binding.type == Enum.ClickBindingType.Interaction then
         if binding.actionID == Enum.ClickBindingInteraction.Target then
@@ -69,24 +67,23 @@ end
 -- Base tooltip handler which generates the tooltip by calling the various functions required.
 function ClickToCastTooltip_GenerateTooltip(tooltip)
     local clickBindings = C_ClickBindings.GetProfileInfo();
-    local dividerColor = CreateColor(addonTable.db.dividerColor.r, addonTable.db.dividerColor.g,
-        addonTable.db.dividerColor.b, addonTable.db.dividerColor.a)
+    local dividerColor = CreateColorFromHexString(ClickToCastTooltipDB.dividerColor)
 
-    if (addonTable.db.showTooltip) then
-        if (addonTable.db.showNewLineTop) then
+    if (ClickToCastTooltipDB.showTooltip) then
+        if (ClickToCastTooltipDB.showNewLineTop) then
             tooltip:AddLine(" ")
         end
-        if (addonTable.db.showHeader) then
+        if (ClickToCastTooltipDB.showHeader) then
             tooltip:AddLine(dividerColor:WrapTextInColorCode("---------------------"))
             tooltip:AddLine("Active Keybinds:")
         end
         for _, binding in ipairs(clickBindings) do
             tooltipLine(binding, tooltip)
         end
-        if (addonTable.db.showFooter) then
+        if (ClickToCastTooltipDB.showFooter) then
             tooltip:AddLine(dividerColor:WrapTextInColorCode("---------------------"))
         end
-        if (addonTable.db.showNewLineBottom) then
+        if (ClickToCastTooltipDB.showNewLineBottom) then
             tooltip:AddLine(" ")
         end
     end
