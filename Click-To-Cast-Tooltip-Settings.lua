@@ -144,9 +144,6 @@ layout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Tooltip Colors
 
 -- Create a button which will allow the user to change the color of the click to cast button text.
 do
-    -- DEFAULT_CHAT_FRAME:AddMessage("Creating button color initializer with color: " ..
-    --                                   tostring(ClickToCastTooltipDB.buttonColor))
-    -- local buttonColor = CreateColorFromHexString(ClickToCastTooltipDB.buttonColor)
     local button = CreateSettingsButtonInitializer("Button Text Color", "Button Text Color", function()
         ShowColorPicker("buttonColor", ButtonColorCallback)
     end, "Change the color of the button text on the tooltip.", true)
@@ -155,7 +152,6 @@ do
 end
 
 do
-    -- local actionColor = CreateColorFromHexString(ClickToCastTooltipDB.actionColor)
     local button = CreateSettingsButtonInitializer("Action Text Color", "Action Text Color", function()
         ShowColorPicker("actionColor", ActionColorCallback)
     end, "Change the color of the action text on the tooltip.", true)
@@ -164,7 +160,6 @@ do
 end
 
 do
-    -- local dividerColor = CreateColorFromHexString(ClickToCastTooltipDB.dividerColor)
     local button = CreateSettingsButtonInitializer("Divider Color", "Divider Color", function()
         ShowColorPicker("dividerColor", DividerColorCallback)
     end, "Change the color of the divider on the tooltip.", true)
@@ -198,11 +193,6 @@ function ShowColorPicker(colorToChange, changedCallback)
         dividerColor = CreateColorFromHexString(ClickToCastTooltipDB.dividerColor)
         r, g, b, a = dividerColor.r, dividerColor.g, dividerColor.b, dividerColor.a
     end
-
-    print("r value: " .. r)
-    print("g value: " .. g)
-    print("b value: " .. b)
-    print("a value: " .. a)
 
     if (ColorPickerFrame.SetupColorPickerAndShow == nil) then
         ColorPickerFrame.func = changedCallback
