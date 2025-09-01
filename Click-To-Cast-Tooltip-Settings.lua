@@ -31,129 +31,153 @@ end
 local options = {
     type = "group",
     name = addonName,
-    width = "half",
+    childGroups = "tab",
     args = {
-        showTooltip = {
-            type = "toggle",
-            name = "Show on Blizzard tooltip",
-            desc = "Show the click to cast binding when hovering over a unit frame.",
-            get = function() return ClickToCastTooltip.db.global.showTooltip end,
-            set = function(_, val) ClickToCastTooltip.db.global.showTooltip = val end,
-            order = 1,
-        },
-        showCustomTooltip = {
-            type = "toggle",
-            name = "Show custom tooltip at mouse",
-            desc = "Show the custom tooltip at the mouse cursor when hovering over a unit frame.",
-            get = function() return ClickToCastTooltip.db.global.showCustomTooltip end,
-            set = function(_, val) ClickToCastTooltip.db.global.showCustomTooltip = val end,
-            order = 2,
-        },
-        showHeader = {
-            type = "toggle",
-            name = "Show dashed header above the tooltip.",
-            desc = "Show the dashed line header on the tooltip.",
-            get = function() return ClickToCastTooltip.db.global.showHeader end,
-            set = function(_, val) ClickToCastTooltip.db.global.showHeader = val end,
-            order = 3,
-        },
-        showFooter = {
-            type = "toggle",
-            name = "Show dashed footer below the tooltip.",
-            desc = "Show the dashed line footer on the tooltip.",
-            get = function() return ClickToCastTooltip.db.global.showFooter end,
-            set = function(_, val) ClickToCastTooltip.db.global.showFooter = val end,
-            order = 4,
-        },
-        showNewLineTop = {
-            type = "toggle",
-            name = "Show new line above the tooltip.",
-            desc = "Show a new line at the top of the tooltip.",
-            get = function() return ClickToCastTooltip.db.global.showNewLineTop end,
-            set = function(_, val) ClickToCastTooltip.db.global.showNewLineTop = val end,
-            order = 5,
-        },
-        showNewLineBottom = {
-            type = "toggle",
-            name = "Show new line below the tooltip.",
-            desc = "Show a new line at the bottom of the tooltip.",
-            get = function() return ClickToCastTooltip.db.global.showNewLineBottom end,
-            set = function(_, val) ClickToCastTooltip.db.global.showNewLineBottom = val end,
-            order = 6,
-        },
-        tooltipTransparency = {
-            type = "range",
-            name = "Custom Tooltip Transparency",
-            desc = "Set the transparency of the custom tooltip (0 = fully transparent, 1 = fully opaque).",
-            min = 0, max = 1, step = 0.01,
-            get = function() return ClickToCastTooltip.db.global.tooltipTransparency end,
-            set = function(_, val) ClickToCastTooltip.db.global.tooltipTransparency = val end,
-            order = 7,
-        },
-        tooltipAnchor = {
-            type = "select",
-            name = "Custom Tooltip Anchor",
-            desc = "Choose where the custom tooltip is anchored.",
-            values = {
-                [1] = "TOPLEFT", [2] = "TOP", [3] = "TOPRIGHT",
-                [4] = "LEFT", [5] = "CENTER", [6] = "RIGHT",
-                [7] = "BOTTOMLEFT", [8] = "BOTTOM", [9] = "BOTTOMRIGHT", [10] = "SCREEN"
-            },
-            get = function() return ClickToCastTooltip.db.global.tooltipAnchor end,
-            set = function(_, val) ClickToCastTooltip.db.global.tooltipAnchor = val end,
-            order = 8,
+        general = {
+            type = "group",
+            name = "General Settings",
+            order = 0,
+            desc = "General settings for Click-To-Cast-Tooltip.",
+            args = {
+                showTooltip = {
+                    type = "toggle",
+                    width = "full",
+                    descStyle = "inline",
+                    name = "Show on Blizzard tooltip",
+                    desc = "Show the click to cast binding when hovering over a unit frame.",
+                    get = function() return ClickToCastTooltip.db.global.showTooltip end,
+                    set = function(_, val) ClickToCastTooltip.db.global.showTooltip = val end,
+                    order = 1,
+                },
+                showCustomTooltip = {
+                    type = "toggle",
+                    width = "full",
+                    descStyle = "inline",
+                    name = "Show custom tooltip at mouse",
+                    desc = "Show the custom tooltip at the mouse cursor when hovering over a unit frame.",
+                    get = function() return ClickToCastTooltip.db.global.showCustomTooltip end,
+                    set = function(_, val) ClickToCastTooltip.db.global.showCustomTooltip = val end,
+                    order = 2,
+                },
+                showHeader = {
+                    type = "toggle",
+                    width = "full",
+                    descStyle = "inline",
+                    name = "Show dashed header above the tooltip.",
+                    desc = "Show the dashed line header on the tooltip.",
+                    get = function() return ClickToCastTooltip.db.global.showHeader end,
+                    set = function(_, val) ClickToCastTooltip.db.global.showHeader = val end,
+                    order = 3,
+                },
+                showFooter = {
+                    type = "toggle",
+                    width = "full",
+                    descStyle = "inline",
+                    name = "Show dashed footer below the tooltip.",
+                    desc = "Show the dashed line footer on the tooltip.",
+                    get = function() return ClickToCastTooltip.db.global.showFooter end,
+                    set = function(_, val) ClickToCastTooltip.db.global.showFooter = val end,
+                    order = 4,
+                },
+                showNewLineTop = {
+                    type = "toggle",
+                    width = "full",
+                    descStyle = "inline",
+                    name = "Show new line above the tooltip.",
+                    desc = "Show a new line at the top of the tooltip.",
+                    get = function() return ClickToCastTooltip.db.global.showNewLineTop end,
+                    set = function(_, val) ClickToCastTooltip.db.global.showNewLineTop = val end,
+                    order = 5,
+                },
+                showNewLineBottom = {
+                    type = "toggle",
+                    width = "full",
+                    descStyle = "inline",
+                    name = "Show new line below the tooltip.",
+                    desc = "Show a new line at the bottom of the tooltip.",
+                    get = function() return ClickToCastTooltip.db.global.showNewLineBottom end,
+                    set = function(_, val) ClickToCastTooltip.db.global.showNewLineBottom = val end,
+                    order = 6,
+                },
+                tooltipTransparency = {
+                    type = "range",
+                    width = "double",
+                    --descStyle = "inline",
+                    name = "Custom Tooltip Transparency",
+                    desc = "Set the transparency of the custom tooltip (0 = fully transparent, 1 = fully opaque).",
+                    min = 0, max = 1, step = 0.01,
+                    get = function() return ClickToCastTooltip.db.global.tooltipTransparency end,
+                    set = function(_, val) ClickToCastTooltip.db.global.tooltipTransparency = val end,
+                    order = 7,
+                },
+                tooltipAnchor = {
+                    type = "select",
+                    --width = "normal",
+                    --descStyle = "inline",
+                    name = "Custom Tooltip Anchor",
+                    desc = "Choose where the custom tooltip is anchored.",
+                    values = {
+                        [1] = "TOPLEFT", [2] = "TOP", [3] = "TOPRIGHT",
+                        [4] = "LEFT", [5] = "CENTER", [6] = "RIGHT",
+                        [7] = "BOTTOMLEFT", [8] = "BOTTOM", [9] = "BOTTOMRIGHT", [10] = "SCREEN"
+                    },
+                    get = function() return ClickToCastTooltip.db.global.tooltipAnchor end,
+                    set = function(_, val) ClickToCastTooltip.db.global.tooltipAnchor = val end,
+                    order = 8,
+                },
+                buttonColor = {
+                    type = "color",
+                    name = "Button Text Color",
+                    desc = "Color for button text.",
+                    hasAlpha = false,
+                    get = function()
+                        local c = ClickToCastTooltip.db.global.buttonColor
+                        local r, g, b = tonumber("0x"..c:sub(3,4))/255, tonumber("0x"..c:sub(5,6))/255, tonumber("0x"..c:sub(7,8))/255
+                        return r, g, b
+                    end,
+                    set = function(_, r, g, b)
+                        ClickToCastTooltip.db.global.buttonColor = string.format("ff%02x%02x%02x", r*255, g*255, b*255)
+                    end,
+                    order = 30,
+                },
+                actionColor = {
+                    type = "color",
+                    name = "Action Text Color",
+                    desc = "Color for action text.",
+                    hasAlpha = false,
+                    get = function()
+                        local c = ClickToCastTooltip.db.global.actionColor
+                        local r, g, b = tonumber("0x"..c:sub(3,4))/255, tonumber("0x"..c:sub(5,6))/255, tonumber("0x"..c:sub(7,8))/255
+                        return r, g, b
+                    end,
+                    set = function(_, r, g, b)
+                        ClickToCastTooltip.db.global.actionColor = string.format("ff%02x%02x%02x", r*255, g*255, b*255)
+                    end,
+                    order = 31,
+                },
+                dividerColor = {
+                    type = "color",
+                    name = "Divider Color",
+                    desc = "Color for divider.",
+                    hasAlpha = false,
+                    get = function()
+                        local c = ClickToCastTooltip.db.global.dividerColor
+                        local r, g, b = tonumber("0x"..c:sub(3,4))/255, tonumber("0x"..c:sub(5,6))/255, tonumber("0x"..c:sub(7,8))/255
+                        return r, g, b
+                    end,
+                    set = function(_, r, g, b)
+                        ClickToCastTooltip.db.global.dividerColor = string.format("ff%02x%02x%02x", r*255, g*255, b*255)
+                    end,
+                    order = 32,
+                }
+            }
         },
         specs = {
             type = "group",
-            name = "Mouse Cursor Tooltip Allow For Classes",
-            inline = true,
-            order = 20,
+            name = "Classes",
+            order = 1,
+            desc = "Toggle which class specializations the custom tooltip should appear for.",
             args = {} -- will be filled dynamically
-        },
-        buttonColor = {
-            type = "color",
-            name = "Button Text Color",
-            desc = "Color for button text.",
-            hasAlpha = false,
-            get = function()
-                local c = ClickToCastTooltip.db.global.buttonColor
-                local r, g, b = tonumber("0x"..c:sub(3,4))/255, tonumber("0x"..c:sub(5,6))/255, tonumber("0x"..c:sub(7,8))/255
-                return r, g, b
-            end,
-            set = function(_, r, g, b)
-                ClickToCastTooltip.db.global.buttonColor = string.format("ff%02x%02x%02x", r*255, g*255, b*255)
-            end,
-            order = 30,
-        },
-        actionColor = {
-            type = "color",
-            name = "Action Text Color",
-            desc = "Color for action text.",
-            hasAlpha = false,
-            get = function()
-                local c = ClickToCastTooltip.db.global.actionColor
-                local r, g, b = tonumber("0x"..c:sub(3,4))/255, tonumber("0x"..c:sub(5,6))/255, tonumber("0x"..c:sub(7,8))/255
-                return r, g, b
-            end,
-            set = function(_, r, g, b)
-                ClickToCastTooltip.db.global.actionColor = string.format("ff%02x%02x%02x", r*255, g*255, b*255)
-            end,
-            order = 31,
-        },
-        dividerColor = {
-            type = "color",
-            name = "Divider Color",
-            desc = "Color for divider.",
-            hasAlpha = false,
-            get = function()
-                local c = ClickToCastTooltip.db.global.dividerColor
-                local r, g, b = tonumber("0x"..c:sub(3,4))/255, tonumber("0x"..c:sub(5,6))/255, tonumber("0x"..c:sub(7,8))/255
-                return r, g, b
-            end,
-            set = function(_, r, g, b)
-                ClickToCastTooltip.db.global.dividerColor = string.format("ff%02x%02x%02x", r*255, g*255, b*255)
-            end,
-            order = 32,
         },
         resetColors = {
             type = "execute",
