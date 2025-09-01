@@ -1,275 +1,248 @@
 local addonName, addonTable = ...
+ClickToCastTooltip = LibStub("AceAddon-3.0"):NewAddon(addonName)
+addonTable.ClickToCastTooltip = ClickToCastTooltip
 
--- These are the default settings for new installs of the addon.
 local defaults = {
-    buttonColor = "ffff0000",
-    actionColor = "ff00ff00",
-    dividerColor = "ffffffff",
-    showHeader = false,
-    showFooter = false,
-    showTooltip = true,
-    showNewLineTop = false,
-    showNewLineBottom = false
+    global = {
+        buttonColor = "ffff0000",
+        actionColor = "ff00ff00",
+        dividerColor = "ffffffff",
+        showHeader = false,
+        showFooter = false,
+        showTooltip = true,
+        showNewLineTop = false,
+        showNewLineBottom = false,
+        showCustomTooltip = true,
+        tooltipTransparency = 0.7,
+        tooltipAnchor = 9,
+    }
 }
 
-function setDefaultSettings(tbl, defaults, force)
-    if (force) then
-        for key, value in next, defaults do
-            if (type(tbl[key]) == "table") then
-                setDefaultSettings(tbl[key], defaults[key], force)
-            else
-                print("Setting default value for key: " .. key)
-                ClickToCastTooltipDB[key] = value
+-- Dynamically add all the specs to the defaults.global
+for classID = 1, 13 do
+    local numSpecs = C_SpecializationInfo.GetNumSpecializationsForClassID(classID)
+    for i = 1, numSpecs do
+        local specID, name = GetSpecializationInfoForClassID(classID, i)
+        local key = "specToggle_" .. specID
+        defaults.global[key] = true
+    end
+end
+
+local options = {
+    type = "group",
+    name = addonName,
+    width = "half",
+    args = {
+        showTooltip = {
+            type = "toggle",
+            name = "Show on Blizzard tooltip",
+            desc = "Show the click to cast binding when hovering over a unit frame.",
+            get = function() return ClickToCastTooltip.db.global.showTooltip end,
+            set = function(_, val) ClickToCastTooltip.db.global.showTooltip = val end,
+            order = 1,
+        },
+        showCustomTooltip = {
+            type = "toggle",
+            name = "Show custom tooltip at mouse",
+            desc = "Show the custom tooltip at the mouse cursor when hovering over a unit frame.",
+            get = function() return ClickToCastTooltip.db.global.showCustomTooltip end,
+            set = function(_, val) ClickToCastTooltip.db.global.showCustomTooltip = val end,
+            order = 2,
+        },
+        showHeader = {
+            type = "toggle",
+            name = "Show dashed header above the tooltip.",
+            desc = "Show the dashed line header on the tooltip.",
+            get = function() return ClickToCastTooltip.db.global.showHeader end,
+            set = function(_, val) ClickToCastTooltip.db.global.showHeader = val end,
+            order = 3,
+        },
+        showFooter = {
+            type = "toggle",
+            name = "Show dashed footer below the tooltip.",
+            desc = "Show the dashed line footer on the tooltip.",
+            get = function() return ClickToCastTooltip.db.global.showFooter end,
+            set = function(_, val) ClickToCastTooltip.db.global.showFooter = val end,
+            order = 4,
+        },
+        showNewLineTop = {
+            type = "toggle",
+            name = "Show new line above the tooltip.",
+            desc = "Show a new line at the top of the tooltip.",
+            get = function() return ClickToCastTooltip.db.global.showNewLineTop end,
+            set = function(_, val) ClickToCastTooltip.db.global.showNewLineTop = val end,
+            order = 5,
+        },
+        showNewLineBottom = {
+            type = "toggle",
+            name = "Show new line below the tooltip.",
+            desc = "Show a new line at the bottom of the tooltip.",
+            get = function() return ClickToCastTooltip.db.global.showNewLineBottom end,
+            set = function(_, val) ClickToCastTooltip.db.global.showNewLineBottom = val end,
+            order = 6,
+        },
+        tooltipTransparency = {
+            type = "range",
+            name = "Custom Tooltip Transparency",
+            desc = "Set the transparency of the custom tooltip (0 = fully transparent, 1 = fully opaque).",
+            min = 0, max = 1, step = 0.01,
+            get = function() return ClickToCastTooltip.db.global.tooltipTransparency end,
+            set = function(_, val) ClickToCastTooltip.db.global.tooltipTransparency = val end,
+            order = 7,
+        },
+        tooltipAnchor = {
+            type = "select",
+            name = "Custom Tooltip Anchor",
+            desc = "Choose where the custom tooltip is anchored.",
+            values = {
+                [1] = "TOPLEFT", [2] = "TOP", [3] = "TOPRIGHT",
+                [4] = "LEFT", [5] = "CENTER", [6] = "RIGHT",
+                [7] = "BOTTOMLEFT", [8] = "BOTTOM", [9] = "BOTTOMRIGHT", [10] = "SCREEN"
+            },
+            get = function() return ClickToCastTooltip.db.global.tooltipAnchor end,
+            set = function(_, val) ClickToCastTooltip.db.global.tooltipAnchor = val end,
+            order = 8,
+        },
+        specs = {
+            type = "group",
+            name = "Mouse Cursor Tooltip Allow For Classes",
+            inline = true,
+            order = 20,
+            args = {} -- will be filled dynamically
+        },
+        buttonColor = {
+            type = "color",
+            name = "Button Text Color",
+            desc = "Color for button text.",
+            hasAlpha = false,
+            get = function()
+                local c = ClickToCastTooltip.db.global.buttonColor
+                local r, g, b = tonumber("0x"..c:sub(3,4))/255, tonumber("0x"..c:sub(5,6))/255, tonumber("0x"..c:sub(7,8))/255
+                return r, g, b
+            end,
+            set = function(_, r, g, b)
+                ClickToCastTooltip.db.global.buttonColor = string.format("ff%02x%02x%02x", r*255, g*255, b*255)
+            end,
+            order = 30,
+        },
+        actionColor = {
+            type = "color",
+            name = "Action Text Color",
+            desc = "Color for action text.",
+            hasAlpha = false,
+            get = function()
+                local c = ClickToCastTooltip.db.global.actionColor
+                local r, g, b = tonumber("0x"..c:sub(3,4))/255, tonumber("0x"..c:sub(5,6))/255, tonumber("0x"..c:sub(7,8))/255
+                return r, g, b
+            end,
+            set = function(_, r, g, b)
+                ClickToCastTooltip.db.global.actionColor = string.format("ff%02x%02x%02x", r*255, g*255, b*255)
+            end,
+            order = 31,
+        },
+        dividerColor = {
+            type = "color",
+            name = "Divider Color",
+            desc = "Color for divider.",
+            hasAlpha = false,
+            get = function()
+                local c = ClickToCastTooltip.db.global.dividerColor
+                local r, g, b = tonumber("0x"..c:sub(3,4))/255, tonumber("0x"..c:sub(5,6))/255, tonumber("0x"..c:sub(7,8))/255
+                return r, g, b
+            end,
+            set = function(_, r, g, b)
+                ClickToCastTooltip.db.global.dividerColor = string.format("ff%02x%02x%02x", r*255, g*255, b*255)
+            end,
+            order = 32,
+        },
+        resetColors = {
+            type = "execute",
+            name = "Reset Colors",
+            desc = "Reset the colors to their default values.",
+            func = function()
+                ClickToCastTooltip.db.global.buttonColor = defaults.global.buttonColor
+                ClickToCastTooltip.db.global.actionColor = defaults.global.actionColor
+                ClickToCastTooltip.db.global.dividerColor = defaults.global.dividerColor
+            end,
+            order = 33,
+        },
+            resetCheckboxes = {
+                type = "execute",
+                name = "Reset All Checkboxes",
+                desc = "Reset all checkboxes to their default values, including all specs.",
+                func = function()
+                    -- Reset main checkboxes
+                    ClickToCastTooltip.db.global.showTooltip = true
+                    ClickToCastTooltip.db.global.showCustomTooltip = true
+                    ClickToCastTooltip.db.global.showHeader = false
+                    ClickToCastTooltip.db.global.showFooter = false
+                    ClickToCastTooltip.db.global.showNewLineTop = false
+                    ClickToCastTooltip.db.global.showNewLineBottom = false
+                    -- Reset all spec toggles to true
+                    for classID = 1, 13 do
+                        local numSpecs = C_SpecializationInfo.GetNumSpecializationsForClassID(classID)
+                        for i = 1, numSpecs do
+                            local specID = select(1, GetSpecializationInfoForClassID(classID, i))
+                            ClickToCastTooltip.db.global["specToggle_" .. specID] = true
+                        end
+                    end
+                end,
+                order = 34,
+            },
+    }
+}
+
+local function AddSpecToggles()
+    local classNames = {
+        [1] = "Warrior", [2] = "Paladin", [3] = "Hunter", [4] = "Rogue", [5] = "Priest", [6] = "Death Knight",
+        [7] = "Shaman", [8] = "Mage", [9] = "Warlock", [10] = "Monk", [11] = "Druid", [12] = "Demon Hunter", [13] = "Evoker"
+    }
+    for classID = 1, 13 do
+        local className = classNames[classID] or ("Class " .. classID)
+        local numSpecs = C_SpecializationInfo.GetNumSpecializationsForClassID(classID)
+        for i = 1, numSpecs do
+            local specID, specName, _, icon = GetSpecializationInfoForClassID(classID, i)
+            local key = "specToggle_" .. specID
+            options.args.specs.args[key] = {
+                type = "toggle",
+                name = className .. ": " .. specName,
+                icon = "Interface\\ICONS\\" .. icon,
+                get = function() return ClickToCastTooltip.db.global[key] end,
+                set = function(_, val) ClickToCastTooltip.db.global[key] = val end,
+                order = specID,
+            }
+            if ClickToCastTooltip.db.global[key] == nil then
+                ClickToCastTooltip.db.global[key] = true
             end
         end
-    else
-        for key, value in next, defaults do
-            if (type(tbl[key]) == "table") then
-                setDefaultSettings(tbl[key], defaults[key])
-            elseif tbl[key] == nil then
-                -- print("Setting default value for key: " .. key)
-                DEFAULT_CHAT_FRAME:AddMessage("Setting default value for key: " .. key)
-                ClickToCastTooltipDB[key] = value
-            end
+    end
+end
+
+function ClickToCastTooltip:OnInitialize()
+    self.db = LibStub("AceDB-3.0"):New("ClickToCastTooltipDB", defaults, true)
+    LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options)
+    ClickToCastTooltip.optionsFrame = LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, addonName)
+    local CURRENT_VERSION = "2.0"
+    local savedVersion = self.db.global.addonVersion or "0"
+    if tonumber(savedVersion) == nil or tonumber(savedVersion) < 2.0 then
+        self.db:ResetDB("Default")
+        self.db.global.addonVersion = CURRENT_VERSION
+        print("Click-To-Cast-Tooltip settings have been reset for version 2.0+.")
+    end
+    AddSpecToggles()
+end
+
+function ClickToCastTooltip:OnEnable()
+    -- Load defaults if not already set
+    for k, v in pairs(defaults.global) do
+        if self.db.global[k] == nil then
+            self.db.global[k] = v
         end
     end
 end
 
-ClickToCastTooltipDB = ClickToCastTooltipDB or CopyTable(defaults)
-do
-    -- Set any values to default if they're currently blank.
-    setDefaultSettings(ClickToCastTooltipDB, defaults)
-
-    if (type(ClickToCastTooltipDB.buttonColor) == "table") then
-        ClickToCastTooltipDB.buttonColor = defaults.buttonColor
-    end
-
-    if (type(ClickToCastTooltipDB.actionColor) == "table") then
-        ClickToCastTooltipDB.actionColor = defaults.actionColor
-    end
-
-    if (type(ClickToCastTooltipDB.dividerColor) == "table") then
-        ClickToCastTooltipDB.dividerColor = defaults.dividerColor
-    end
-end
-
-local function OnSettingsChanged(_, setting, value)
-    local variable = setting:GetVariable()
-    ClickToCastTooltipDB[variable] = value
-    print("Setting changed: " .. setting:GetVariable(), value)
-end
-
-local category, layout = Settings.RegisterVerticalLayoutCategory(addonName)
-
--- Create checkbox which will allow the user to toggle the tooltip on and off.
-do
-    local variable = "showTooltip"
-    local variableTbl = ClickToCastTooltipDB
-    local variableKey = "toggle"
-    local name = "Show tooltip"
-    local tooltip = "Show the click to cast binding when hovering over a unit frame."
-    local defaultValue = true
-
-    local setting = Settings.RegisterAddOnSetting(category, variable, variableKey, variableTbl, type(defaultValue),
-        name, defaultValue)
-    Settings.CreateCheckbox(category, setting, tooltip)
-    Settings.SetOnValueChangedCallback(variable, OnSettingsChanged)
-end
-
-layout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Dashed Header/Footer"))
-
--- Create checkbox which will allow the user to toggle the header on the tooltip.
-do
-    local variable = "showHeader"
-    local variableTbl = ClickToCastTooltipDB
-    local variableKey = "toggle"
-    local name = "Show dashed header above the tooltip."
-    local tooltip = "Show the dashed line header on the tooltip."
-    local defaultValue = true
-
-    local setting = Settings.RegisterAddOnSetting(category, variable, variableKey, variableTbl, type(defaultValue),
-        name, defaultValue)
-    Settings.CreateCheckbox(category, setting, tooltip)
-    Settings.SetOnValueChangedCallback(variable, OnSettingsChanged)
-end
-
--- Create checkbox which will allow the user to toggle the footer on the tooltip.
-do
-    local variable = "showFooter"
-    local variableTbl = ClickToCastTooltipDB
-    local variableKey = "toggle"
-    local name = "Show dashed footer below the tooltip."
-    local tooltip = "Show the dashed line footer on the tooltip."
-    local defaultValue = true
-
-    local setting = Settings.RegisterAddOnSetting(category, variable, variableKey, variableTbl, type(defaultValue),
-        name, defaultValue)
-    Settings.CreateCheckbox(category, setting, tooltip)
-    Settings.SetOnValueChangedCallback(variable, OnSettingsChanged)
-end
-
-layout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Empty Line Header/Footer"))
-
--- Create checkbox which will allow the user to toggle the new line at the top of the tooltip.
-do
-    local variable = "showNewLineTop"
-    local variableTbl = ClickToCastTooltipDB
-    local variableKey = "toggle"
-    local name = "Show new line above the tooltip."
-    local tooltip = "Show a new line at the top of the tooltip."
-    local defaultValue = false
-
-    local setting = Settings.RegisterAddOnSetting(category, variable, variableKey, variableTbl, type(defaultValue),
-        name, defaultValue)
-    Settings.CreateCheckbox(category, setting, tooltip)
-    Settings.SetOnValueChangedCallback(variable, OnSettingsChanged)
-end
-
--- Create checkbox which will allow the user to toggle the new line at the bottom of the tooltip.
-do
-    local variable = "showNewLineBottom"
-    local variableTbl = ClickToCastTooltipDB
-    local variableKey = "toggle"
-    local name = "Show new line below the tooltip."
-    local tooltip = "Show a new line at the bottom of the tooltip."
-    local defaultValue = false
-
-    local setting = Settings.RegisterAddOnSetting(category, variable, variableKey, variableTbl, type(defaultValue),
-        name, defaultValue)
-    Settings.CreateCheckbox(category, setting, tooltip)
-    Settings.SetOnValueChangedCallback(variable, OnSettingsChanged)
-end
-
-layout:AddInitializer(CreateSettingsListSectionHeaderInitializer("Tooltip Colors"))
-
--- Create a button which will allow the user to change the color of the click to cast button text.
-do
-    local button = CreateSettingsButtonInitializer("Button Text Color", "Button Text Color", function()
-        ShowColorPicker("buttonColor", ButtonColorCallback)
-    end, "Change the color of the button text on the tooltip.", true)
-
-    layout:AddInitializer(button)
-end
-
-do
-    local button = CreateSettingsButtonInitializer("Action Text Color", "Action Text Color", function()
-        ShowColorPicker("actionColor", ActionColorCallback)
-    end, "Change the color of the action text on the tooltip.", true)
-
-    layout:AddInitializer(button)
-end
-
-do
-    local button = CreateSettingsButtonInitializer("Divider Color", "Divider Color", function()
-        ShowColorPicker("dividerColor", DividerColorCallback)
-    end, "Change the color of the divider on the tooltip.", true)
-
-    layout:AddInitializer(button)
-end
-
-do
-    local button = CreateSettingsButtonInitializer("Reset Colors", "Reset Colors", function()
-        ClickToCastTooltipDB.buttonColor = defaults.buttonColor
-        ClickToCastTooltipDB.actionColor = defaults.actionColor
-        ClickToCastTooltipDB.dividerColor = defaults.dividerColor
-    end, "Reset the colors to their default values.", true)
-
-    layout:AddInitializer(button)
-end
-
-Settings.RegisterAddOnCategory(category)
-
--- -- Shows the color picker with the callback function
-function ShowColorPicker(colorToChange, changedCallback)
-    if (colorToChange == nil) then
-        throw "Color to change is nil"
-    elseif (colorToChange == "buttonColor") then
-        buttonColor = CreateColorFromHexString(ClickToCastTooltipDB.buttonColor)
-        r, g, b, a = buttonColor.r, buttonColor.g, buttonColor.b, buttonColor.a
-    elseif (colorToChange == "actionColor") then
-        actionColor = CreateColorFromHexString(ClickToCastTooltipDB.actionColor)
-        r, g, b, a = actionColor.r, actionColor.g, actionColor.b, actionColor.a
-    elseif (colorToChange == "dividerColor") then
-        dividerColor = CreateColorFromHexString(ClickToCastTooltipDB.dividerColor)
-        r, g, b, a = dividerColor.r, dividerColor.g, dividerColor.b, dividerColor.a
-    end
-
-    if (ColorPickerFrame.SetupColorPickerAndShow == nil) then
-        ColorPickerFrame.func = changedCallback
-        ColorPickerFrame.hasOpacity = (a ~= nil)
-        ColorPickerFrame.opacityFunc = changedCallback
-        ColorPickerFrame.opacity = a
-        ColorPickerFrame.previousValues = {r, g, b, a}
-        ColorPickerFrame.cancelFunc = changedCallback
-        ColorPickerFrame.extraInfo = changedCallback
-        ColorPickerFrame:SetColorRGB(r, g, b)
-        ColorPickerFrame:Show()
-    else
-        local info = {}
-        info.swatchFunc = changedCallback
-        info.cancelFunc = ColorPickerCancel
-        info.hasOpacity = (a ~= nil)
-        info.previousValues = {r, g, b, a}
-        info.r, info.g, info.b, info.opacity = r, g, b, a
-        ColorPickerFrame:SetupColorPickerAndShow(info)
-    end
-end
-
--- Function to be called when color picker is canceled
-function ColorPickerCancel()
-    -- Do nothing
-end
-
--- Callback function to protect the color picker from no selection being made
-function ButtonColorCallback(restore)
-    local newR, newG, newB, newA
-
-    if restore then
-        -- The user bailed , we extreact the old color from the table created by ShowColorPicker.
-        newR, newG, newB, newA = unpack(restore)
-    else
-        -- Something changed
-        newA, newR, newG, newB = ColorPickerFrame:GetColorAlpha(), ColorPickerFrame:GetColorRGB()
-    end
-
-    ClickToCastTooltipDB.buttonColor = string.format("%02x%02x%02x%02x", newA * 255, newR * 255, newG * 255, newB * 255)
-    print("Button color changed to: " .. tostring(ClickToCastTooltipDB.buttonColor))
-end
-
-function ActionColorCallback(restore)
-    local newR, newG, newB, newA
-
-    if restore then
-        -- The user bailed , we extreact the old color from the table created by ShowColorPicker.
-        newR, newG, newB, newA = unpack(restore)
-    else
-        -- Something changed
-        newA, newR, newG, newB = ColorPickerFrame:GetColorAlpha(), ColorPickerFrame:GetColorRGB()
-    end
-
-    ClickToCastTooltipDB.actionColor = string.format("%02x%02x%02x%02x", newA * 255, newR * 255, newG * 255, newB * 255)
-end
-
-function DividerColorCallback(restore)
-    local newR, newG, newB, newA
-
-    if restore then
-        -- The user bailed , we extreact the old color from the table created by ShowColorPicker.
-        newR, newG, newB, newA = unpack(restore)
-    else
-        -- Something changed
-        newA, newR, newG, newB = ColorPickerFrame:GetColorAlpha(), ColorPickerFrame:GetColorRGB()
-    end
-
-    ClickToCastTooltipDB.dividerColor =
-        string.format("%02x%02x%02x%02x", newA * 255, newR * 255, newG * 255, newB * 255)
-end
-
--- Add the supported slash commands
 SLASH_CLICKTOCASTTT1 = "/clicktocasttooltip"
 SLASH_CLICKTOCASTTT2 = "/ctctt"
-
--- Handle the slash commands
-SlashCmdList["CLICKTOCASTTT"] = function(msg)
-    Settings.OpenToCategory(category.ID)
+SlashCmdList["CLICKTOCASTTT"] = function()
+    Settings.OpenToCategory(addonName)
 end

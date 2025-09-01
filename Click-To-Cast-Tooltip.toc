@@ -9,5 +9,7 @@
 ## X-WoWI-ID: 26824
 ## DefaultState: Enabled
 
+## OptionalDeps: Ace3
+
 Click-To-Cast-Tooltip-Settings.lua
 Click-To-Cast-Tooltip.lua
