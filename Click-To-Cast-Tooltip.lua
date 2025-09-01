@@ -5,7 +5,8 @@ local blizzardTooltip = CreateFrame("GameTooltip", "BlizzardTooltip", UIParent, 
 blizzardTooltip:RegisterEvent("MODIFIER_STATE_CHANGED")
 
 -- Setup custom tooltip that will be shown at the mouse
-local clickToCastTooltip = CreateFrame("GameTooltip", "ClickToCastTooltip", UIParent, "GameTooltipTemplate")
+local clickToCastTooltip = CreateFrame("GameTooltip", "ClickToCastTooltip", UIParent, "GameTooltipTemplate, BackdropTemplate")
+
 clickToCastTooltip:SetFrameStrata("TOOLTIP")
 clickToCastTooltip:RegisterEvent("MODIFIER_STATE_CHANGED")
 
@@ -85,6 +86,7 @@ local function clickToCastTooltipBuilder(frame)
     local clickBindings = C_ClickBindings.GetProfileInfo()
     clickToCastTooltip:ClearLines()
     clickToCastTooltip:SetOwner(UIParent, "ANCHOR_NONE")
+
     local x, y = GetCursorPosition()
     local scale = UIParent:GetEffectiveScale()
     local anchor = "BOTTOMRIGHT"
@@ -104,6 +106,7 @@ local function clickToCastTooltipBuilder(frame)
             local scale = UIParent:GetEffectiveScale()
             self:ClearAllPoints()
             self:SetPoint(anchor, UIParent, "BOTTOMLEFT", x / scale, y / scale)
+            self:SetAlpha(db.tooltipTransparency)
         end)
     else
         clickToCastTooltip:Hide()
@@ -155,17 +158,6 @@ local function clickToCastTooltipDestroyer(frame)
         clickToCastTooltip:Hide()
     end
 end
-
--- Hides and cleans up the Blizzard tooltip.
--- @param frame Frame: The unit frame the mouse is leaving
-local function blizzardTooltipDestroyer(frame)
-    blizzardTooltip:SetScript("OnUpdate", nil)
-
-    if blizzardTooltip:IsShown() then
-        blizzardTooltip:Hide()
-    end
-end
-
 
 local unitFramePrefixes = {
     "PlayerFrame",
