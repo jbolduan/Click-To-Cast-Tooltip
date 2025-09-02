@@ -217,8 +217,13 @@ end
 local elvUIUnitFrames = {
     "ElvUF_Player",
     "ElvUF_Target",
+    "ElvUF_TargetTarget",
+    "ElvUF_TargetTargetTarget",
     "ElvUF_Focus",
-    "ElvUF_Pet"
+    "ElvUF_FocusTarget",
+    "ElvUF_Pet",
+    "ElvUF_PetTarget",
+    "ElvUF_AssistUnitButton1"
 }
 
 -- Scans and hooks OnEnter/OnLeave for ElvUI unit frames if ElvUI is loaded.
@@ -283,6 +288,61 @@ local function scanAndHookElvUIUnitFrames()
                         hookedFrames[frame] = true
                     end
                 end
+            end
+        end
+
+        -- Raid pet frames
+
+        for i = 1, 9 do 
+            local frame = _G["ElvUF_RaidpetGroup1UnitButton" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+
+        -- Arena Frames
+        for i = 1, 5 do
+            local frame = _G["ElvUF_Arena" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+
+        -- Boss Frames
+        for i = 1, 8 do
+            local frame = _G["ElvUF_Boss" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
             end
         end
     end
