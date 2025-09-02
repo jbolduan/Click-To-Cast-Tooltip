@@ -169,7 +169,6 @@ local blizzardFrames = {
     -- "SUFUnit",
     -- "PitBull4_Frames_",
     -- "Grid2LayoutHeader",
-    -- "VuhDoPanel",
     -- "oUF_"
 }
 
