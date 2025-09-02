@@ -167,7 +167,7 @@ local unitFramePrefixes = {
     "PartyMemberFrame",
     "Boss",
     "ArenaEnemyFrame",
-    --"CompactRaidFrame",
+    -- "CompactRaidFrame",
     -- "SUFUnit",
     -- "PitBull4_Frames_",
     -- "Grid2LayoutHeader",
@@ -348,6 +348,247 @@ local function scanAndHookElvUIUnitFrames()
     end
 end
 
+local cellFrames = {
+    "CellSoloFramePet",
+    "CellSoloFramePlayer"
+}
+
+local function scanAndHookCellFrames()
+    
+    ---@diagnostic disable-next-line: undefined-global
+    if type(Cell) == "table" then
+
+        -- Static frame names
+        for _, frameName in ipairs(cellFrames) do
+            local frame = _G[frameName]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+
+        -- Arena Pet Frames
+        for i = 1, 3 do
+            local frame = _G["CellArenaPet" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+
+        -- NPC Frames
+        for i = 1, 8 do
+            local frame = _G["CellNPCFrameButton" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+
+        -- Party Frames
+        for i = 1, 5 do
+            local frame = _G["CellPartyFrameHeaderUnitButton" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+
+        -- Party Pet Frames
+        for i = 1, 8 do
+            local frame = _G["CellPartyFrameUnitButton" .. i .. "Pet"]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+
+        -- Pet Frames Separate
+        for i = 1, 20 do
+            local frame = _G["CellPetFrameHeaderUnitButton" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+
+        -- Quick Assist Frames
+        for i = 1, 40 do
+            local frame = _G["CellQuickAssistHeaderUnitButton" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+
+        -- Raid0 Frames
+        for i = 1, 40 do
+            local frame = _G["CellRaidFrameHeader0UnitButton" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+
+        -- Raid Frames
+        for raid = 1, 8 do
+            for i = 1, 5 do
+                local frame = _G["CellRaidFrameHeader" .. raid .. "UnitButton" .. i]
+                if frame and frame.HookScript and not hookedFrames[frame] then
+                    frame:HookScript("OnEnter", function(self)
+                        lastHoveredFrame = frame
+                        clickToCastTooltipBuilder(self)
+                    end)
+                    frame:HookScript("OnLeave", function(self)
+                        clickToCastTooltipDestroyer(self)
+                        if lastHoveredFrame == frame then
+                            lastHoveredFrame = nil
+                        end
+                    end)
+                    hookedFrames[frame] = true
+                end
+            end
+        end
+
+        -- Cell Spotlight Unit Frames
+        for i = 1, 15 do
+            local frame = _G["CellSpotlightFrameUnitButton" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+    end
+end
+
+local cellUnitFrames = {
+    "CUF_Player",
+    "CUF_Focus",
+    "CUF_Pet",
+    "CUF_Target",
+    "CUF_TargetTarget"
+}
+
+local function scanAndHookCellUnitFrames()
+    ---@diagnostic disable-next-line: undefined-global
+    if type(CUF) == "table" then
+        for _, frameName in ipairs(cellUnitFrames) do
+            local frame = _G[frameName]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+
+        for i = 1, 10 do
+            local frame = _G["CUF_Boss" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+    end
+end
+
 -- Event handler for the tooltip when the modifier state changes
 clickToCastTooltip:SetScript("OnEvent", function(self, event, ...)
     if event == "MODIFIER_STATE_CHANGED" then
@@ -376,6 +617,8 @@ scanFrame:HookScript("OnUpdate", function(self, delta)
         elapsed = 0
         scanAndHookUnitFrames()
         scanAndHookElvUIUnitFrames()
+        scanAndHookCellFrames()
+        scanAndHookCellUnitFrames()
     end
 end)
 
@@ -389,5 +632,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 or event == "RAID_ROSTER_UPDATE" then
         scanAndHookUnitFrames()
         scanAndHookElvUIUnitFrames()
+        scanAndHookCellFrames()
+        scanAndHookCellUnitFrames()
     end
 end)
