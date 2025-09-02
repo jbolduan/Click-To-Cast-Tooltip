@@ -159,15 +159,13 @@ local function clickToCastTooltipDestroyer(frame)
     end
 end
 
-local unitFramePrefixes = {
+local blizzardFrames = {
     "PlayerFrame",
     "TargetFrame",
+    "TargetFrameToT",
     "FocusFrame",
+    "FocusFrameToT",
     "PetFrame",
-    "PartyMemberFrame",
-    "Boss",
-    "ArenaEnemyFrame",
-    -- "CompactRaidFrame",
     -- "SUFUnit",
     -- "PitBull4_Frames_",
     -- "Grid2LayoutHeader",
@@ -175,33 +173,94 @@ local unitFramePrefixes = {
     -- "oUF_"
 }
 
--- Checks if a frame name matches known unit frame prefixes.
--- @param name string: The frame name to check
--- @return boolean: True if the name matches a unit frame
-local function isUnitFrameName(name)
-    if not name then return false end
-    for _, prefix in ipairs(unitFramePrefixes) do
-        if name:find(prefix, 1, true) == 1 then
-            return true
-        end
-    end
-    return false
-end
-
 local hookedFrames = setmetatable({}, {__mode = "k"})
 -- Scans all frames and hooks OnEnter/OnLeave for Blizzard unit frames.
 local function scanAndHookUnitFrames()
-    local frame = EnumerateFrames()
-    while frame do
-        if frame and frame.GetObjectType and type(frame.GetName) == "function" and not hookedFrames[frame] and frame.HookScript then
-            local success, name = pcall(frame.GetName, frame)
-            if success and name and isUnitFrameName(name) then
-                frame:HookScript("OnEnter", function()
-                    lastHoveredFrame = frame
-                    clickToCastTooltipBuilder(frame)
+    -- Iterate through static Blizzard Frames
+    for _, frameName in ipairs(blizzardFrames) do
+        local frame = _G[frameName]
+        if frame and frame.HookScript and not hookedFrames[frame] then
+            frame:HookScript("OnEnter", function(self)
+                lastHoveredFrame = frame
+                clickToCastTooltipBuilder(self)
+            end)
+            frame:HookScript("OnLeave", function(self)
+                clickToCastTooltipDestroyer(self)
+                if lastHoveredFrame == frame then
+                    lastHoveredFrame = nil
+                end
+            end)
+            hookedFrames[frame] = true
+        end
+    end
+
+    -- Party Frames
+    local partyFrame = _G["PartyFrame"]
+    if partyFrame then
+        for memberFrame in partyFrame.PartyMemberFramePool:EnumerateActive() do
+            if memberFrame and memberFrame.HookScript and not hookedFrames[memberFrame] then
+                memberFrame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = memberFrame
+                    clickToCastTooltipBuilder(self)
                 end)
-                frame:HookScript("OnLeave", function()
-                    clickToCastTooltipDestroyer(frame)
+                memberFrame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == memberFrame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[memberFrame] = true
+            end
+        end
+    end
+
+    -- Compact Party Frames
+    for i = 1, 5 do
+        local frame = _G["CompactPartyFrameMember" .. i]
+        if frame and frame.HookScript and not hookedFrames[frame] then
+            frame:HookScript("OnEnter", function()
+                lastHoveredFrame = frame
+                clickToCastTooltipBuilder(frame)
+            end)
+            frame:HookScript("OnLeave", function()
+                clickToCastTooltipDestroyer(frame)
+                if lastHoveredFrame == frame then
+                    lastHoveredFrame = nil
+                end
+            end)
+            hookedFrames[frame] = true
+        end
+    end
+
+    -- Boss Frames
+    for i = 1, 10 do
+        local frame = _G["Boss" .. i .. "TargetFrame"]
+        if frame and frame.HookScript and not hookedFrames[frame] then
+            frame:HookScript("OnEnter", function()
+                lastHoveredFrame = frame
+                clickToCastTooltipBuilder(frame)
+            end)
+            frame:HookScript("OnLeave", function()
+                clickToCastTooltipDestroyer(frame)
+                if lastHoveredFrame == frame then
+                    lastHoveredFrame = nil
+                end
+            end)
+            hookedFrames[frame] = true
+        end
+    end
+
+    -- Compact Raid Frames
+    for i = 1, 8 do
+        for j = 1, 40 do
+            local frame = _G["CompactRaidGroup" .. i .. "Member" .. j]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
                     if lastHoveredFrame == frame then
                         lastHoveredFrame = nil
                     end
@@ -209,7 +268,25 @@ local function scanAndHookUnitFrames()
                 hookedFrames[frame] = true
             end
         end
-        frame = EnumerateFrames(frame)
+    end
+
+    -- Enemy Arena Frames
+    -- I don't know if this will work and have not tested.
+    for i = 1, 5 do
+        local frame = _G["ArenaEnemyFrame" .. i]
+        if frame and frame.HookScript and not hookedFrames[frame] then
+            frame:HookScript("OnEnter", function()
+                lastHoveredFrame = frame
+                clickToCastTooltipBuilder(frame)
+            end)
+            frame:HookScript("OnLeave", function()
+                clickToCastTooltipDestroyer(frame)
+                if lastHoveredFrame == frame then
+                    lastHoveredFrame = nil
+                end
+            end)
+            hookedFrames[frame] = true
+        end
     end
 end
 
