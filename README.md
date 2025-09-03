@@ -24,11 +24,11 @@ Customize colors for buttons and actions:
 
 ![Class Color Settings](assets/settings_classes.jpg)
 
-### Example Tooltip
+### Example Blizzard Tooltip
 
 Blizzard tooltip with all options enabled (shown with ElvUI):
 
-![Example Tooltip](assets/example_tooltip.jpg)
+![Example Blizzard Tooltip](assets/example_tooltip.jpg)
 
 ### Mouseover Tooltip
 
