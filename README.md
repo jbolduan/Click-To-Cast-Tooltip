@@ -7,7 +7,7 @@ Click-To-Cast-Tooltip is a World of Warcraft addon that displays a dynamic toolt
 - Custom tooltip at mouse cursor showing available click-cast bindings
 - Blizzard tooltip integration for unit frames
 - Full support for party, raid, boss, arena, and pet frames
-- Works with Blizzard, ElvUI, Cell, and other major unit frame addons
+- Works with Blizzard, ElvUI, Cell, Grid2, and other major unit frame addons
 - Highly configurable appearance and behavior
 
 ## Screenshots
@@ -72,6 +72,7 @@ All settings are available in the options panel. Here’s what you can configure
 - Blizzard: Player, Target, Focus, Pet, Party, Raid, Boss, Arena, and more
 - ElvUI: All major unit frames, including party/raid/arena
 - Cell: Party, raid, pet, spotlight, quick assist, and more
+- Grid2: All raid and party frames (e.g., Grid2LayoutHeader1UnitButton1, etc.)
 
 ## How It Works
 

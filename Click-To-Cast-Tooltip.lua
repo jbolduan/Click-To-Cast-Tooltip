@@ -159,6 +159,8 @@ local function clickToCastTooltipDestroyer(frame)
     end
 end
 
+--#region Blizzard Frames
+
 local blizzardFrames = {
     "PlayerFrame",
     "TargetFrame",
@@ -288,6 +290,10 @@ local function scanAndHookUnitFrames()
         end
     end
 end
+
+--#endregion
+
+--#region ElvUI Frames
 
 -- Hook into explicit ElvUI frames if ElvUI is detected
 local elvUIUnitFrames = {
@@ -423,6 +429,10 @@ local function scanAndHookElvUIUnitFrames()
         end
     end
 end
+
+--#endregion
+
+--#region Cell Frames
 
 local cellFrames = {
     "CellSoloFramePet",
@@ -665,6 +675,34 @@ local function scanAndHookCellUnitFrames()
     end
 end
 
+--#endregion
+
+--#region Grid2 Frames
+
+local function scanAndHookGrid2UnitFrames()
+    ---@diagnostic disable-next-line: undefined-global
+    for i = 1, 8 do
+        for j = 1, 5 do
+            local frame = _G["Grid2LayoutHeader" .. i .. "UnitButton" .. j]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+    end
+end
+
+--#regionf
+
 -- Event handler for the tooltip when the modifier state changes
 clickToCastTooltip:SetScript("OnEvent", function(self, event, ...)
     if event == "MODIFIER_STATE_CHANGED" then
@@ -695,6 +733,7 @@ scanFrame:HookScript("OnUpdate", function(self, delta)
         scanAndHookElvUIUnitFrames()
         scanAndHookCellFrames()
         scanAndHookCellUnitFrames()
+        scanAndHookGrid2UnitFrames()
     end
 end)
 
@@ -710,5 +749,6 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         scanAndHookElvUIUnitFrames()
         scanAndHookCellFrames()
         scanAndHookCellUnitFrames()
+        scanAndHookGrid2UnitFrames()
     end
 end)
