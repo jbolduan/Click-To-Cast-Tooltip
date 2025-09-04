@@ -73,6 +73,7 @@ All settings are available in the options panel. Here’s what you can configure
 - ElvUI: All major unit frames, including party/raid/arena
 - Cell: Party, raid, pet, spotlight, quick assist, and more
 - Grid2: All raid and party frames (e.g., Grid2LayoutHeader1UnitButton1, etc.)
+- Shadowed Unit Frames (SUF): Player, pet, target, focus, raid, main tank, main assist, and more (e.g., SUFHeaderraidUnitButton1, SUFHeadermaintankUnitButton1, etc.)
 
 ## How It Works
 

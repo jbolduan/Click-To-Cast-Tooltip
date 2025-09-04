@@ -168,9 +168,7 @@ local blizzardFrames = {
     "FocusFrame",
     "FocusFrameToT",
     "PetFrame",
-    -- "SUFUnit",
     -- "PitBull4_Frames_",
-    -- "Grid2LayoutHeader",
     -- "oUF_"
 }
 
@@ -701,7 +699,81 @@ local function scanAndHookGrid2UnitFrames()
     end
 end
 
---#regionf
+--#endregion
+
+--#region Shadowed Unit Frames
+
+local sUF = {
+    "SUFUnitplayer",
+    "SUFUnitpet",
+    "SUFUnittarget",
+    "SUFUnittargettarget",
+    "SUFUnittargettargettarget",
+    "SUFUnitfocus",
+    "SUFUnitfocustarget",
+    "SUFHeadermainassistUnitButton1",
+    "SUFHeadermaintankUnitButton1"
+}
+
+local function scanAndHookShadowedUnitFrames()
+    ---@diagnostic disable-next-line: undefined-global
+    if type(ShadowedUFDB) == "table" then
+        for _, frameName in ipairs(sUF) do
+            local frame = _G[frameName]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+
+        -- Party Frames
+        for i = 1, 5 do
+            local frame = _G["SUFHeaderpartyUnitButton" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+
+        -- Raid Frames
+        for i = 1, 40 do
+            local frame = _G["SUFHeaderraidUnitButton" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+    end
+end
+
+--#endregion
 
 -- Event handler for the tooltip when the modifier state changes
 clickToCastTooltip:SetScript("OnEvent", function(self, event, ...)
@@ -734,6 +806,7 @@ scanFrame:HookScript("OnUpdate", function(self, delta)
         scanAndHookCellFrames()
         scanAndHookCellUnitFrames()
         scanAndHookGrid2UnitFrames()
+        scanAndHookShadowedUnitFrames()
     end
 end)
 
@@ -750,5 +823,6 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         scanAndHookCellFrames()
         scanAndHookCellUnitFrames()
         scanAndHookGrid2UnitFrames()
+        scanAndHookShadowedUnitFrames()
     end
 end)
