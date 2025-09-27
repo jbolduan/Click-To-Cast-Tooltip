@@ -31,7 +31,11 @@ local lastHoveredFrame = nil
 -- @param nonBlankLineCount table: Table with .value for counting non-blank lines
 -- @return nil
 local function updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
-    for _, binding in ipairs(clickBindings) do
+    local blizzardBindingsAdded = false
+    
+    -- Process Blizzard/WoW native bindings if enabled
+    if db.showBlizzardBindings ~= false then
+        for _, binding in ipairs(clickBindings) do
         local modifier = C_ClickBindings.GetStringFromModifiers(binding.modifiers)
         local actionName = tostring(binding.actionID)
         if binding.type == Enum.ClickBindingType.Interaction then
@@ -65,6 +69,132 @@ local function updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
             if lineText:match("%S") then -- contains non-whitespace
                 nonBlankLineCount.value = nonBlankLineCount.value + 1
                 tooltip:AddLine(lineText)
+                blizzardBindingsAdded = true
+            end
+        end
+        end
+    end
+
+    -- Add Clique bindings if available and enabled (mimicking C_ClickBindings workflow)
+    ---@diagnostic disable-next-line: undefined-global
+    if db.showCliqueBindings ~= false and Clique and Clique.db and Clique.db.profile and Clique.db.profile.bindings then
+        ---@diagnostic disable-next-line: undefined-global
+        local profile = Clique.db.profile
+        local cliqueBindings = {}
+        
+        -- Convert Clique bindings to a format similar to C_ClickBindings
+        for key, binding in pairs(profile.bindings) do
+            if binding and binding.sets then
+                -- Check if binding should be active (similar to modifier key logic)
+                local shouldShow = false
+                local inCombat = InCombatLockdown()
+                
+                for setName, _ in pairs(binding.sets) do
+                    if setName == "default" then
+                        shouldShow = true
+                    elseif setName == "ooc" and not inCombat then
+                        shouldShow = true
+                    elseif setName == "hovercast" then
+                        shouldShow = true
+                    elseif setName == "global" then
+                        shouldShow = true
+                    end
+                end
+                
+                if shouldShow then
+                    table.insert(cliqueBindings, {
+                        key = key,
+                        binding = binding
+                    })
+                end
+            end
+        end
+        
+        -- Process Clique bindings similar to how we process C_ClickBindings
+        local cliqueBindingsAdded = false
+        for _, cliqueEntry in ipairs(cliqueBindings) do
+            local binding = cliqueEntry.binding
+            local bindingKey = cliqueEntry.key  -- This is the array index, not the actual key
+            
+            -- Extract action name (spell, macro, or action)
+            local actionName = "Unknown"
+            if binding.spell then
+                actionName = binding.spell
+            elseif binding.macro then
+                actionName = "Macro: " .. (binding.macro or "Unknown")
+            elseif binding.action then
+                actionName = binding.action
+            elseif binding.type == "target" then
+                actionName = "Target"
+            elseif binding.type == "menu" then
+                actionName = "Open Menu"
+            end
+            
+            -- Use the actual key from the binding, not the array index
+            local buttonText = binding.key
+            if buttonText and type(buttonText) == "string" then
+                -- Parse modifier keys from the Clique key string (case insensitive)
+                local lowerKey = buttonText:lower()
+                local hasShift = lowerKey:find("shift") ~= nil
+                local hasCtrl = lowerKey:find("ctrl") ~= nil or lowerKey:find("control") ~= nil
+                local hasAlt = lowerKey:find("alt") ~= nil
+                
+                -- Check current modifier state
+                local isShiftKeyDown = IsShiftKeyDown()
+                local isAltKeyDown = IsAltKeyDown()
+                local isControlKeyDown = IsControlKeyDown()
+                
+                -- Apply same filtering logic as WoW native bindings
+                local show = false
+                if (isShiftKeyDown and isAltKeyDown and isControlKeyDown) and (hasShift and hasAlt and hasCtrl) then 
+                    show = true
+                elseif (isShiftKeyDown and isAltKeyDown) and (hasShift and hasAlt and not hasCtrl) and not isControlKeyDown then 
+                    show = true
+                elseif (isControlKeyDown and isAltKeyDown) and (hasAlt and hasCtrl and not hasShift) and not isShiftKeyDown then 
+                    show = true
+                elseif (isShiftKeyDown and isControlKeyDown) and (hasShift and hasCtrl and not hasAlt) and not isAltKeyDown then 
+                    show = true
+                elseif isShiftKeyDown and (hasShift and not hasAlt and not hasCtrl) and not (isAltKeyDown or isControlKeyDown) then 
+                    show = true
+                elseif isAltKeyDown and (hasAlt and not hasShift and not hasCtrl) and not (isShiftKeyDown or isControlKeyDown) then 
+                    show = true
+                elseif isControlKeyDown and (hasCtrl and not hasShift and not hasAlt) and not (isShiftKeyDown or isAltKeyDown) then 
+                    show = true
+                elseif (not isAltKeyDown and not isControlKeyDown and not isShiftKeyDown) and (not hasShift and not hasAlt and not hasCtrl) then 
+                    show = true
+                end
+                
+                if show then
+                    -- Add separator before first Clique binding if we have both types
+                    if not cliqueBindingsAdded and blizzardBindingsAdded then
+                        local dividerColor = CreateColorFromHexString(db.dividerColor or "ffffffff")
+                        local separatorLine = dividerColor:WrapTextInColorCode("--- Clique ---")
+                        tooltip:AddLine(separatorLine)
+                        nonBlankLineCount.value = nonBlankLineCount.value + 1
+                    end
+                    
+                    -- Convert Clique key format to readable format
+                    local displayText = buttonText:gsub("BUTTON1", "Left Click")
+                    displayText = displayText:gsub("BUTTON2", "Right Click")
+                    displayText = displayText:gsub("BUTTON3", "Middle Click")
+                    displayText = displayText:gsub("BUTTON4", "Button4")
+                    displayText = displayText:gsub("BUTTON5", "Button5")
+                    
+                    -- Handle modifiers in the key for display
+                    displayText = displayText:gsub("shift%-", "Shift-")
+                    displayText = displayText:gsub("ctrl%-", "Ctrl-")
+                    displayText = displayText:gsub("alt%-", "Alt-")
+                    
+                    local buttonColor = CreateColorFromHexString(db.buttonColor)
+                    local actionColor = CreateColorFromHexString(db.actionColor)
+                    local lineText = buttonColor:WrapTextInColorCode(displayText) .. " - " .. actionColor:WrapTextInColorCode(actionName)
+                    
+                    if lineText:match("%S") then -- contains non-whitespace
+                        nonBlankLineCount.value = nonBlankLineCount.value + 1
+                        tooltip:AddLine(lineText)
+                        cliqueBindingsAdded = true
+                    end
+                end
             end
         end
     end

@@ -15,6 +15,9 @@ local defaults = {
         showCustomTooltip = true,
         tooltipTransparency = 0.7,
         tooltipAnchor = 9,
+        showBlizzardBindings = true,
+        showCliqueBindings = true,
+        hasShownCliquePopup = false,
     }
 }
 
@@ -99,6 +102,26 @@ local options = {
                     set = function(_, val) ClickToCastTooltip.db.global.showNewLineBottom = val end,
                     order = 6,
                 },
+                showBlizzardBindings = {
+                    type = "toggle",
+                    width = "full",
+                    descStyle = "inline",
+                    name = "Show Blizzard click-to-cast bindings",
+                    desc = "Show WoW's native click-to-cast bindings in the tooltip.",
+                    get = function() return ClickToCastTooltip.db.global.showBlizzardBindings end,
+                    set = function(_, val) ClickToCastTooltip.db.global.showBlizzardBindings = val end,
+                    order = 7,
+                },
+                showCliqueBindings = {
+                    type = "toggle",
+                    width = "full",
+                    descStyle = "inline",
+                    name = "Show Clique addon bindings",
+                    desc = "Show Clique addon bindings in the tooltip (requires Clique addon).",
+                    get = function() return ClickToCastTooltip.db.global.showCliqueBindings end,
+                    set = function(_, val) ClickToCastTooltip.db.global.showCliqueBindings = val end,
+                    order = 8,
+                },
                 tooltipTransparency = {
                     type = "range",
                     width = "double",
@@ -108,7 +131,7 @@ local options = {
                     min = 0, max = 1, step = 0.01,
                     get = function() return ClickToCastTooltip.db.global.tooltipTransparency end,
                     set = function(_, val) ClickToCastTooltip.db.global.tooltipTransparency = val end,
-                    order = 7,
+                    order = 9,
                 },
                 tooltipAnchor = {
                     type = "select",
@@ -123,7 +146,7 @@ local options = {
                     },
                     get = function() return ClickToCastTooltip.db.global.tooltipAnchor end,
                     set = function(_, val) ClickToCastTooltip.db.global.tooltipAnchor = val end,
-                    order = 8,
+                    order = 10,
                 },
                 buttonColor = {
                     type = "color",
@@ -263,6 +286,44 @@ function ClickToCastTooltip:OnEnable()
             self.db.global[k] = v
         end
     end
+    
+    -- Check for Clique and show popup if needed
+    self:CheckForCliqueAndShowPopup()
+end
+
+function ClickToCastTooltip:CheckForCliqueAndShowPopup()
+    -- Only show popup once and only if Clique is installed
+    ---@diagnostic disable-next-line: undefined-global
+    if not self.db.global.hasShownCliquePopup and Clique then
+        -- Delay popup to ensure UI is ready
+        C_Timer.After(2, function()
+            self:ShowCliquePopup()
+        end)
+    end
+end
+
+-- Define the StaticPopup for Clique detection
+StaticPopupDialogs["CLICK_TO_CAST_TOOLTIP_CLIQUE_DETECTED"] = {
+    text = "Clique addon detected! Since you're using Clique for click-to-cast, would you like to disable the display of Blizzard's native click-to-cast bindings?\n\nThis will show only your Clique bindings in the tooltip, avoiding duplicate information.",
+    button1 = "Yes, disable Blizzard bindings",
+    button2 = "No, keep both",
+    OnAccept = function()
+        ClickToCastTooltip.db.global.showBlizzardBindings = false
+        ClickToCastTooltip.db.global.hasShownCliquePopup = true
+        print("|cff00ff00Click-To-Cast-Tooltip:|r Blizzard bindings disabled. You can re-enable them in the addon settings if needed.")
+    end,
+    OnCancel = function()
+        ClickToCastTooltip.db.global.hasShownCliquePopup = true
+        print("|cff00ff00Click-To-Cast-Tooltip:|r Keeping both Blizzard and Clique bindings enabled.")
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3,
+}
+
+function ClickToCastTooltip:ShowCliquePopup()
+    StaticPopup_Show("CLICK_TO_CAST_TOOLTIP_CLIQUE_DETECTED")
 end
 
 SLASH_CLICKTOCASTTT1 = "/clicktocasttooltip"

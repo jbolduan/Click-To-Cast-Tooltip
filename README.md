@@ -6,6 +6,7 @@ Click-To-Cast-Tooltip is a World of Warcraft addon that displays a dynamic toolt
 
 - Custom tooltip at mouse cursor showing available click-cast bindings
 - Blizzard tooltip integration for unit frames
+- Clique addon integration: show your Clique click-cast bindings in the tooltip
 - Full support for party, raid, boss, arena, and pet frames
 - Works with Blizzard, ElvUI, Cell, Grid2, and other major unit frame addons
 - Highly configurable appearance and behavior
@@ -74,6 +75,12 @@ All settings are available in the options panel. Here’s what you can configure
 - Cell: Party, raid, pet, spotlight, quick assist, and more
 - Grid2: All raid and party frames (e.g., Grid2LayoutHeader1UnitButton1, etc.)
 - Shadowed Unit Frames (SUF): Player, pet, target, focus, raid, main tank, main assist, and more (e.g., SUFHeaderraidUnitButton1, SUFHeadermaintankUnitButton1, etc.)
+
+## Clique Addon Support
+
+- If you use the popular [Clique](https://www.curseforge.com/wow/addons/clique) addon for click-casting, Click-To-Cast-Tooltip will automatically detect and display your Clique bindings in the tooltip.
+- You can choose to show only Clique bindings, only Blizzard bindings, or both (configurable in the settings).
+- On first load with Clique installed, you'll be prompted to disable Blizzard bindings for a cleaner experience (one-time prompt).
 
 ## How It Works
 
