@@ -4,4 +4,5 @@
     <Script file="libraries\Ace3\LibStub\LibStub.lua" />
     <Include file="libraries\Ace3\AceAddon-3.0\AceAddon-3.0.xml" />
     <Include file="libraries\Ace3\AceDB-3.0\AceDB-3.0.xml" />
+    <Include file="libraries\Ace3\AceConfig-3.0\AceConfig-3.0.xml" />
 </Ui>
