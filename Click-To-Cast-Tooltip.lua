@@ -121,7 +121,7 @@ local function updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
             if binding.spell then
                 actionName = binding.spell
             elseif binding.macro then
-                actionName = "Macro: " .. (binding.macro or "Unknown")
+                actionName = binding.macro or "Unknown"
             elseif binding.action then
                 actionName = binding.action
             elseif binding.type == "target" then
