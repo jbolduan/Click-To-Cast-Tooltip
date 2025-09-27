@@ -1,13 +1,14 @@
 ## Interface: 110200
 ## Title: Click to Cast Tooltip
 ## Author: theGimpboy
-## Version: 2.0.6
+## Version: 2.0.7
 ## Notes: Adds the click to cast spells and macros to the tooltip.
 ## SavedVariables: ClickToCastTooltipDB
 ## X-Website: https://github.com/jbolduan/Click-To-Cast-Tooltip
 ## X-Wago-ID: BKpqAyGE
 ## X-WoWI-ID: 26824
 ## DefaultState: Enabled
+## OptionalDeps: ElvUI
 
 embeds.xml
 

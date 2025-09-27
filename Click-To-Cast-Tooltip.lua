@@ -70,6 +70,17 @@ local function updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
     end
 end
 
+-- Initialize ElvUI tooltip styling
+local function initializeElvUITooltip()
+    ---@diagnostic disable-next-line: undefined-global
+    if ElvUI and ElvUI[1] then
+        ---@diagnostic disable-next-line: undefined-global
+        local E, L, V, P, G = unpack(ElvUI)
+        local TT = E:GetModule("Tooltip")
+        TT:SetStyle(clickToCastTooltip)
+    end
+end
+
 -- Builds and displays the custom tooltip at the mouse cursor.
 -- @param frame Frame: The unit frame the mouse is over
 local function clickToCastTooltipBuilder(frame)
@@ -100,7 +111,9 @@ local function clickToCastTooltipBuilder(frame)
     
     updateTooltip(db, clickBindings, clickToCastTooltip, nonBlankLineCount)
     if nonBlankLineCount.value > 0 then
+        initializeElvUITooltip()
         clickToCastTooltip:Show()
+        
         clickToCastTooltip:SetScript("OnUpdate", function(self)
             local x, y = GetCursorPosition()
             local scale = UIParent:GetEffectiveScale()
