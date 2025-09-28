@@ -211,6 +211,15 @@ local function initializeElvUITooltip()
     end
 end
 
+local function initializeTukUITooltip()
+    ---@diagnostic disable-next-line: undefined-global
+    if Tukui then
+        local T, C, L = unpack(Tukui)
+        local Tooltip = T["Tooltips"]
+
+        Tooltip.Skin(clickToCastTooltip)
+    end
+
 -- Builds and displays the custom tooltip at the mouse cursor.
 -- @param frame Frame: The unit frame the mouse is over
 local function clickToCastTooltipBuilder(frame)
@@ -242,6 +251,7 @@ local function clickToCastTooltipBuilder(frame)
     updateTooltip(db, clickBindings, clickToCastTooltip, nonBlankLineCount)
     if nonBlankLineCount.value > 0 then
         initializeElvUITooltip()
+        initializeTukUITooltip()
         clickToCastTooltip:Show()
         
         clickToCastTooltip:SetScript("OnUpdate", function(self)
@@ -918,6 +928,94 @@ end
 
 --#endregion
 
+--#region TukUI Frames
+
+local tukUIFrames = {
+    "TukuiPlayerFrame",
+    "TukuiTargetFrame",
+    "TukuiTargetTargetFrame",
+    "TukuiFocusFrame",
+    "TukuiFocusTargetFrame",
+    "TukuiPetFrame"
+}
+
+local function scanAndHookTukUIFrames()
+    if type(T) == "table" or type(Tukui) == "table" then
+        -- Hook specific TukUI unit frames
+        for _, frameName in ipairs(tukUIFrames) do
+            local frame = _G[frameName]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+        
+        -- Hook TukUI party frames
+        for i = 1, 4 do
+            local frame = _G["TukuiPartyUnitButton" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+        
+        -- Hook TukUI raid frames
+        for i = 1, 40 do
+            local frame = _G["TukuiRaidUnitButton" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+
+        for i = 1, 20 do
+            local frame  = _G["TukuiRaidPetUnitButton" .. i]
+            if frame and frame.HookScript and not hookedFrames[frame] then
+                frame:HookScript("OnEnter", function(self)
+                    lastHoveredFrame = frame
+                    clickToCastTooltipBuilder(self)
+                end)
+                frame:HookScript("OnLeave", function(self)
+                    clickToCastTooltipDestroyer(self)
+                    if lastHoveredFrame == frame then
+                        lastHoveredFrame = nil
+                    end
+                end)
+                hookedFrames[frame] = true
+            end
+        end
+    end
+end
+
+--#endregion
+
 -- Event handler for the tooltip when the modifier state changes
 clickToCastTooltip:SetScript("OnEvent", function(self, event, ...)
     if event == "MODIFIER_STATE_CHANGED" then
@@ -950,6 +1048,7 @@ scanFrame:HookScript("OnUpdate", function(self, delta)
         scanAndHookCellUnitFrames()
         scanAndHookGrid2UnitFrames()
         scanAndHookShadowedUnitFrames()
+        scanAndHookTukUIFrames()
     end
 end)
 
@@ -967,5 +1066,6 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         scanAndHookCellUnitFrames()
         scanAndHookGrid2UnitFrames()
         scanAndHookShadowedUnitFrames()
+        scanAndHookTukUIFrames()
     end
 end)
