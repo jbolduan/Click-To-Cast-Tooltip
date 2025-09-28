@@ -219,6 +219,7 @@ local function initializeTukUITooltip()
 
         Tooltip.Skin(clickToCastTooltip)
     end
+end
 
 -- Builds and displays the custom tooltip at the mouse cursor.
 -- @param frame Frame: The unit frame the mouse is over
