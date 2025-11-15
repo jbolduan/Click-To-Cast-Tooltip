@@ -313,10 +313,29 @@ local function clickToCastTooltipDestroyer(frame)
     end
 end
 
+-- Add a frame clearing timer to handle rapid frame transitions
+local clearFrameTimer = nil
+
+local function scheduleFrameClear(frame)
+    -- Cancel any existing timer
+    if clearFrameTimer then
+        clearFrameTimer:Cancel()
+    end
+    
+    -- Schedule a delayed clear to allow for rapid frame transitions
+    clearFrameTimer = C_Timer.NewTimer(0.1, function()
+        if lastHoveredFrame == frame then
+            lastHoveredFrame = nil
+        end
+        clearFrameTimer = nil
+    end)
+end
+
 --#region Blizzard Frames
 
 local blizzardFrames = {
     "PlayerFrame",
+    "AlternatePowerBar",
     "TargetFrame",
     "TargetFrameToT",
     "FocusFrame",
@@ -325,6 +344,34 @@ local blizzardFrames = {
     -- "PitBull4_Frames_",
     -- "oUF_"
 }
+
+local findHealthManaBars= function(frame)
+    local checked = {}
+    local healthBar, manaBar, altPower = nil, nil, nil
+
+    local recurse
+
+    recurse = function(frame)
+        if type(frame) ~= "table" then return end
+        if checked[frame] then return end
+
+        checked[frame] = true
+        for key, value in pairs(frame) do
+            if key == "HealthBar" then
+                healthBar = value
+            elseif key == "ManaBar" then
+                manaBar = value
+            elseif key == "AlternatePowerBar" then
+                altPower = value
+            elseif type(value) == "table" then
+                recurse(value)
+            end
+        end
+    end
+
+    recurse(frame)
+    return healthBar, manaBar, altPower
+end
 
 local hookedFrames = setmetatable({}, {__mode = "k"})
 -- Scans all frames and hooks OnEnter/OnLeave for Blizzard unit frames.
@@ -339,10 +386,28 @@ local function scanAndHookUnitFrames()
             end)
             frame:HookScript("OnLeave", function(self)
                 clickToCastTooltipDestroyer(self)
-                if lastHoveredFrame == frame then
-                    lastHoveredFrame = nil
-                end
+                scheduleFrameClear(frame)
             end)
+
+            local h, m, a = findHealthManaBars(frame)
+            if h then
+                h:SetPropagateMouseClicks(true)
+                h:SetPropagateMouseMotion(true)
+            end
+
+            if m then
+                m:SetPropagateMouseClicks(true)
+                m:SetPropagateMouseMotion(true)
+            end
+
+            if a then
+                a:SetPropagateMouseClicks(true)
+                a:SetPropagateMouseMotion(true)
+            end
+
+            frame:SetPropagateMouseClicks(true)
+            frame:SetPropagateMouseMotion(true)
+
             hookedFrames[frame] = true
         end
     end
@@ -358,9 +423,7 @@ local function scanAndHookUnitFrames()
                 end)
                 memberFrame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == memberFrame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(memberFrame)
                 end)
                 hookedFrames[memberFrame] = true
             end
@@ -377,9 +440,7 @@ local function scanAndHookUnitFrames()
             end)
             frame:HookScript("OnLeave", function()
                 clickToCastTooltipDestroyer(frame)
-                if lastHoveredFrame == frame then
-                    lastHoveredFrame = nil
-                end
+                scheduleFrameClear(frame)
             end)
             hookedFrames[frame] = true
         end
@@ -395,9 +456,7 @@ local function scanAndHookUnitFrames()
             end)
             frame:HookScript("OnLeave", function()
                 clickToCastTooltipDestroyer(frame)
-                if lastHoveredFrame == frame then
-                    lastHoveredFrame = nil
-                end
+                scheduleFrameClear(frame)
             end)
             hookedFrames[frame] = true
         end
@@ -414,9 +473,7 @@ local function scanAndHookUnitFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -434,9 +491,7 @@ local function scanAndHookUnitFrames()
             end)
             frame:HookScript("OnLeave", function()
                 clickToCastTooltipDestroyer(frame)
-                if lastHoveredFrame == frame then
-                    lastHoveredFrame = nil
-                end
+                scheduleFrameClear(frame)
             end)
             hookedFrames[frame] = true
         end
@@ -475,9 +530,7 @@ local function scanAndHookElvUIUnitFrames()
                 end)
                 frame:HookScript("OnLeave", function()
                     clickToCastTooltipDestroyer(frame)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -494,9 +547,7 @@ local function scanAndHookElvUIUnitFrames()
                     end)
                     frame:HookScript("OnLeave", function(self)
                         clickToCastTooltipDestroyer(self)
-                        if lastHoveredFrame == frame then
-                            lastHoveredFrame = nil
-                        end
+                        scheduleFrameClear(frame)
                     end)
                     hookedFrames[frame] = true
                 end
@@ -515,9 +566,7 @@ local function scanAndHookElvUIUnitFrames()
                         end)
                         frame:HookScript("OnLeave", function(self)
                             clickToCastTooltipDestroyer(self)
-                            if lastHoveredFrame == frame then
-                                lastHoveredFrame = nil
-                            end
+                            scheduleFrameClear(frame)
                         end)
                         hookedFrames[frame] = true
                     end
@@ -536,9 +585,7 @@ local function scanAndHookElvUIUnitFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -554,9 +601,7 @@ local function scanAndHookElvUIUnitFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -572,9 +617,7 @@ local function scanAndHookElvUIUnitFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -606,9 +649,7 @@ local function scanAndHookCellFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -624,9 +665,7 @@ local function scanAndHookCellFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -642,9 +681,7 @@ local function scanAndHookCellFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -660,9 +697,7 @@ local function scanAndHookCellFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -678,9 +713,7 @@ local function scanAndHookCellFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -696,9 +729,7 @@ local function scanAndHookCellFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -714,9 +745,7 @@ local function scanAndHookCellFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -732,9 +761,7 @@ local function scanAndHookCellFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -751,9 +778,7 @@ local function scanAndHookCellFrames()
                     end)
                     frame:HookScript("OnLeave", function(self)
                         clickToCastTooltipDestroyer(self)
-                        if lastHoveredFrame == frame then
-                            lastHoveredFrame = nil
-                        end
+                        scheduleFrameClear(frame)
                     end)
                     hookedFrames[frame] = true
                 end
@@ -770,9 +795,7 @@ local function scanAndHookCellFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -800,9 +823,7 @@ local function scanAndHookCellUnitFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -817,9 +838,7 @@ local function scanAndHookCellUnitFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -843,9 +862,7 @@ local function scanAndHookGrid2UnitFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -881,9 +898,7 @@ local function scanAndHookShadowedUnitFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -899,9 +914,7 @@ local function scanAndHookShadowedUnitFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -917,9 +930,7 @@ local function scanAndHookShadowedUnitFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -952,9 +963,7 @@ local function scanAndHookTukUIFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -970,9 +979,7 @@ local function scanAndHookTukUIFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -988,9 +995,7 @@ local function scanAndHookTukUIFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -1005,9 +1010,7 @@ local function scanAndHookTukUIFrames()
                 end)
                 frame:HookScript("OnLeave", function(self)
                     clickToCastTooltipDestroyer(self)
-                    if lastHoveredFrame == frame then
-                        lastHoveredFrame = nil
-                    end
+                    scheduleFrameClear(frame)
                 end)
                 hookedFrames[frame] = true
             end
@@ -1020,8 +1023,15 @@ end
 -- Event handler for the tooltip when the modifier state changes
 clickToCastTooltip:SetScript("OnEvent", function(self, event, ...)
     if event == "MODIFIER_STATE_CHANGED" then
+        -- Check lastHoveredFrame first, then scan for any frame under mouse if needed
         if lastHoveredFrame and lastHoveredFrame:IsMouseOver() then
             clickToCastTooltipBuilder(lastHoveredFrame)
+        else
+            -- Fallback: check if we still have a valid last hovered frame without mouse check
+            -- This handles rapid frame transitions where IsMouseOver might fail momentarily
+            if lastHoveredFrame then
+                clickToCastTooltipBuilder(lastHoveredFrame)
+            end
         end
     end
 end)

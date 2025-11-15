@@ -1,7 +1,7 @@
-## Interface: 110205
+## Interface: 110205, 110207, 120000
 ## Title: Click to Cast Tooltip
 ## Author: theGimpboy
-## Version: 2.2.4
+## Version: 2.3.0
 ## Notes: Adds the click to cast spells and macros to the tooltip.
 ## SavedVariables: ClickToCastTooltipDB
 ## X-Website: https://github.com/jbolduan/Click-To-Cast-Tooltip
@@ -11,7 +11,15 @@
 ## DefaultState: Enabled
 ## OptionalDeps: ElvUI, Clique, Cell, Grid2, ShadowedUnitFrames, Tukui
 
-embeds.xml
+# Ace3 Library Dependencies
+libraries\Ace3\LibStub\LibStub.lua
+libraries\Ace3\CallbackHandler-1.0\CallbackHandler-1.0.xml
+libraries\Ace3\AceAddon-3.0\AceAddon-3.0.xml
+libraries\Ace3\AceDB-3.0\AceDB-3.0.xml
+libraries\Ace3\AceDBOptions-3.0\AceDBOptions-3.0.xml
+libraries\Ace3\AceEvent-3.0\AceEvent-3.0.xml
+libraries\Ace3\AceGUI-3.0\AceGUI-3.0.xml
+libraries\Ace3\AceConfig-3.0\AceConfig-3.0.xml
 
 Click-To-Cast-Tooltip-Settings.lua
 Click-To-Cast-Tooltip.lua
