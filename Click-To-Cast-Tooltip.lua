@@ -45,7 +45,20 @@ local function updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
                 actionName = "Open Context Menu"
             end
         elseif binding.type == Enum.ClickBindingType.Spell then
-            actionName = C_Spell.GetSpellName(binding.actionID)
+            -- Resolve spec-specific overrides so we show the correct spell name (e.g., Holy Shock vs. Crusader Strike)
+            local overrideID = binding.actionID
+            if C_SpellBook and C_SpellBook.FindSpellOverrideByID then
+                overrideID = C_SpellBook.FindSpellOverrideByID(binding.actionID) or binding.actionID
+            end
+
+            if C_Spell and C_Spell.GetSpellInfo then
+                local spellInfo = C_Spell.GetSpellInfo(overrideID)
+                actionName = spellInfo and spellInfo.name or actionName
+            end
+
+            if actionName == tostring(binding.actionID) and C_Spell and C_Spell.GetSpellName then
+                actionName = C_Spell.GetSpellName(overrideID)
+            end
         elseif binding.type == Enum.ClickBindingType.Macro then
             actionName = GetMacroInfo(binding.actionID)
         end
