@@ -329,5 +329,5 @@ end
 SLASH_CLICKTOCASTTT1 = "/clicktocasttooltip"
 SLASH_CLICKTOCASTTT2 = "/ctctt"
 SlashCmdList["CLICKTOCASTTT"] = function()
-    Settings.OpenToCategory(addonName)
+    LibStub("AceConfigDialog-3.0"):Open(addonName)
 end

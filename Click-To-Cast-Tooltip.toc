@@ -9,7 +9,7 @@
 ## X-Wago-ID: BKpqAyGE
 ## X-WoWI-ID: 26824
 ## DefaultState: Enabled
-## OptionalDeps: ElvUI, Clique, Cell, Grid2, ShadowedUnitFrames, Tukui
+## OptionalDeps: ElvUI, Clique, Cell, Grid2, ShadowedUnitFrames, Tukui, UnhaltedUnitFrames
 
 # Ace3 Library Dependencies
 libraries\Ace3\LibStub\LibStub.lua
@@ -21,5 +21,24 @@ libraries\Ace3\AceEvent-3.0\AceEvent-3.0.xml
 libraries\Ace3\AceGUI-3.0\AceGUI-3.0.xml
 libraries\Ace3\AceConfig-3.0\AceConfig-3.0.xml
 
+# Core modules (load order matters)
+Core\Init.lua
+Core\FrameHooker.lua
+FrameHandlers\Registry.lua
+
+# Frame Handlers (add new handlers here)
+FrameHandlers\Blizzard.lua
+FrameHandlers\ElvUI.lua
+FrameHandlers\Cell.lua
+FrameHandlers\CellUnitFrames.lua
+FrameHandlers\Grid2.lua
+FrameHandlers\ShadowedUnitFrames.lua
+FrameHandlers\TukUI.lua
+FrameHandlers\UnhaltedUnitFrames.lua
+
+# Settings and Main
 Click-To-Cast-Tooltip-Settings.lua
-Click-To-Cast-Tooltip.lua
+Click-To-Cast-Tooltip-Main.lua
+
+# Legacy file (kept for reference, can be removed after migration)
+# Click-To-Cast-Tooltip.lua
