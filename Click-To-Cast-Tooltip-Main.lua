@@ -41,6 +41,12 @@ local function clickToCastTooltipBuilder(frame)
         return
     end
     
+    -- Check if this unit frame type should show the tooltip
+    if not addonTable.shouldShowForUnitFrameType(frame) then
+        addonTable.clickCastingTooltip:Hide()
+        return
+    end
+    
     local clickBindings = C_ClickBindings.GetProfileInfo()
     addonTable.clickCastingTooltip:ClearLines()
     addonTable.clickCastingTooltip:SetOwner(UIParent, "ANCHOR_NONE")
@@ -62,6 +68,10 @@ local function clickToCastTooltipBuilder(frame)
     
     if nonBlankLineCount.value > 0 then
         addonTable.frameHandler.init()
+        -- Apply theme settings before showing
+        if addonTable.applyTooltipTheme then
+            addonTable.applyTooltipTheme()
+        end
         addonTable.clickCastingTooltip:Show()
         
         addonTable.clickCastingTooltip:SetScript("OnUpdate", function(self)
@@ -81,6 +91,12 @@ end
 local function blizzardTooltipBuilder(tooltip)
     -- Guard against nil tooltip or non-GameTooltip frames
     if not tooltip or tooltip ~= GameTooltip then
+        return
+    end
+    
+    -- Only show on hooked unit frames, not world units
+    -- Check if we're actually hovering over a tracked unit frame
+    if not addonTable.lastHoveredFrame or not addonTable.lastHoveredFrame:IsMouseOver() then
         return
     end
     
@@ -105,6 +121,11 @@ local function blizzardTooltipBuilder(tooltip)
     local db = ClickToCastTooltip and ClickToCastTooltip.db and ClickToCastTooltip.db.global
 
     if db and db.showTooltip == false then
+        return
+    end
+    
+    -- Check if this unit frame type should show the tooltip
+    if not addonTable.shouldShowForUnitFrameType(addonTable.lastHoveredFrame) then
         return
     end
 
@@ -137,6 +158,12 @@ end
 --- Hides and cleans up the custom tooltip.
 -- @param frame Frame: The unit frame the mouse is leaving
 local function clickToCastTooltipDestroyer(frame)
+    -- Only hide if we're leaving the currently tracked frame
+    -- This prevents hiding when moving between adjacent frames (e.g., party members)
+    if frame and addonTable.lastHoveredFrame and frame ~= addonTable.lastHoveredFrame then
+        return
+    end
+    
     addonTable.clickCastingTooltip:SetScript("OnUpdate", nil)
     if addonTable.clickCastingTooltip:IsShown() then
         addonTable.clickCastingTooltip:Hide()

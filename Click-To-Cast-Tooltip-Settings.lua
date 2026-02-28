@@ -18,6 +18,27 @@ local defaults = {
         showBlizzardBindings = true,
         showCliqueBindings = true,
         hasShownCliquePopup = false,
+        -- Theme settings
+        tooltipBackgroundColor = "ff1a1a2e",
+        tooltipBorderColor = "ff4a4a6a",
+        tooltipFontSize = 12,
+        tooltipScale = 1.0,
+        tooltipPadding = 8,
+        tooltipSquareCorners = false,
+        tooltipBackgroundTexture = 1,
+        tooltipBorderTexture = 1,
+        useElvUITheme = true,
+        -- Unit frame type toggles
+        unitFramePlayer = true,
+        unitFrameTarget = true,
+        unitFrameFocus = true,
+        unitFrameParty = true,
+        unitFrameRaid = true,
+        unitFrameBoss = true,
+        unitFrameArena = true,
+        unitFramePet = true,
+        unitFrameTargetOfTarget = true,
+        unitFrameNPC = true,
     }
 }
 
@@ -201,6 +222,322 @@ local options = {
             order = 1,
             desc = "Toggle which class specializations the custom tooltip should appear for.",
             args = {} -- will be filled dynamically
+        },
+        unitFrames = {
+            type = "group",
+            name = "Unit Frames",
+            order = 2,
+            desc = "Toggle which unit frame types should show the tooltip.",
+            args = {
+                unitFramesHeader = {
+                    type = "header",
+                    name = "Unit Frame Type Toggles",
+                    order = 0,
+                },
+                unitFramesDescription = {
+                    type = "description",
+                    name = "Enable or disable the click-to-cast tooltip for specific unit frame types. This works for both Blizzard frames and addon frames.",
+                    order = 1,
+                },
+                unitFramePlayer = {
+                    type = "toggle",
+                    width = "full",
+                    name = "Player Frame",
+                    desc = "Show tooltip when hovering over player frames.",
+                    get = function() return ClickToCastTooltip.db.global.unitFramePlayer end,
+                    set = function(_, val) ClickToCastTooltip.db.global.unitFramePlayer = val end,
+                    order = 10,
+                },
+                unitFrameTarget = {
+                    type = "toggle",
+                    width = "full",
+                    name = "Target Frame",
+                    desc = "Show tooltip when hovering over target frames.",
+                    get = function() return ClickToCastTooltip.db.global.unitFrameTarget end,
+                    set = function(_, val) ClickToCastTooltip.db.global.unitFrameTarget = val end,
+                    order = 11,
+                },
+                unitFrameFocus = {
+                    type = "toggle",
+                    width = "full",
+                    name = "Focus Frame",
+                    desc = "Show tooltip when hovering over focus frames.",
+                    get = function() return ClickToCastTooltip.db.global.unitFrameFocus end,
+                    set = function(_, val) ClickToCastTooltip.db.global.unitFrameFocus = val end,
+                    order = 12,
+                },
+                unitFrameParty = {
+                    type = "toggle",
+                    width = "full",
+                    name = "Party Frames",
+                    desc = "Show tooltip when hovering over party member frames.",
+                    get = function() return ClickToCastTooltip.db.global.unitFrameParty end,
+                    set = function(_, val) ClickToCastTooltip.db.global.unitFrameParty = val end,
+                    order = 13,
+                },
+                unitFrameRaid = {
+                    type = "toggle",
+                    width = "full",
+                    name = "Raid Frames",
+                    desc = "Show tooltip when hovering over raid member frames.",
+                    get = function() return ClickToCastTooltip.db.global.unitFrameRaid end,
+                    set = function(_, val) ClickToCastTooltip.db.global.unitFrameRaid = val end,
+                    order = 14,
+                },
+                unitFrameBoss = {
+                    type = "toggle",
+                    width = "full",
+                    name = "Boss Frames",
+                    desc = "Show tooltip when hovering over boss frames.",
+                    get = function() return ClickToCastTooltip.db.global.unitFrameBoss end,
+                    set = function(_, val) ClickToCastTooltip.db.global.unitFrameBoss = val end,
+                    order = 15,
+                },
+                unitFrameArena = {
+                    type = "toggle",
+                    width = "full",
+                    name = "Arena Frames",
+                    desc = "Show tooltip when hovering over arena enemy frames.",
+                    get = function() return ClickToCastTooltip.db.global.unitFrameArena end,
+                    set = function(_, val) ClickToCastTooltip.db.global.unitFrameArena = val end,
+                    order = 16,
+                },
+                unitFramePet = {
+                    type = "toggle",
+                    width = "full",
+                    name = "Pet Frames",
+                    desc = "Show tooltip when hovering over pet frames (including party/raid pets).",
+                    get = function() return ClickToCastTooltip.db.global.unitFramePet end,
+                    set = function(_, val) ClickToCastTooltip.db.global.unitFramePet = val end,
+                    order = 17,
+                },
+                unitFrameTargetOfTarget = {
+                    type = "toggle",
+                    width = "full",
+                    name = "Target of Target Frames",
+                    desc = "Show tooltip when hovering over target-of-target or focus-target frames.",
+                    get = function() return ClickToCastTooltip.db.global.unitFrameTargetOfTarget end,
+                    set = function(_, val) ClickToCastTooltip.db.global.unitFrameTargetOfTarget = val end,
+                    order = 18,
+                },
+                unitFrameNPC = {
+                    type = "toggle",
+                    width = "full",
+                    name = "NPC Frames",
+                    desc = "Show tooltip when hovering over NPC unit frames (Cell addon).",
+                    get = function() return ClickToCastTooltip.db.global.unitFrameNPC end,
+                    set = function(_, val) ClickToCastTooltip.db.global.unitFrameNPC = val end,
+                    order = 19,
+                },
+                resetUnitFrames = {
+                    type = "execute",
+                    name = "Enable All",
+                    desc = "Enable tooltips for all unit frame types.",
+                    func = function()
+                        ClickToCastTooltip.db.global.unitFramePlayer = true
+                        ClickToCastTooltip.db.global.unitFrameTarget = true
+                        ClickToCastTooltip.db.global.unitFrameFocus = true
+                        ClickToCastTooltip.db.global.unitFrameParty = true
+                        ClickToCastTooltip.db.global.unitFrameRaid = true
+                        ClickToCastTooltip.db.global.unitFrameBoss = true
+                        ClickToCastTooltip.db.global.unitFrameArena = true
+                        ClickToCastTooltip.db.global.unitFramePet = true
+                        ClickToCastTooltip.db.global.unitFrameTargetOfTarget = true
+                        ClickToCastTooltip.db.global.unitFrameNPC = true
+                    end,
+                    order = 30,
+                },
+            }
+        },
+        theme = {
+            type = "group",
+            name = "Theme",
+            order = 3,
+            desc = "Customize the appearance of the custom tooltip.",
+            args = {
+                themeHeader = {
+                    type = "header",
+                    name = "Custom Tooltip Theme",
+                    order = 0,
+                },
+                themeDescription = {
+                    type = "description",
+                    name = "Customize the visual appearance of the custom floating tooltip. These settings only affect the custom tooltip shown at your mouse cursor, not the Blizzard tooltip.",
+                    order = 1,
+                },
+                useElvUITheme = {
+                    type = "toggle",
+                    width = "full",
+                    name = "Use ElvUI Theme (if detected)",
+                    desc = "When ElvUI is installed, use its built-in tooltip styling instead of the custom theme settings below.",
+                    get = function() return ClickToCastTooltip.db.global.useElvUITheme end,
+                    set = function(_, val)
+                        ClickToCastTooltip.db.global.useElvUITheme = val
+                        if addonTable.applyTooltipTheme then
+                            addonTable.applyTooltipTheme()
+                        end
+                    end,
+                    hidden = function() return not (ElvUI and ElvUI[1]) end,
+                    order = 2,
+                },
+                tooltipBackgroundColor = {
+                    type = "color",
+                    name = "Background Color",
+                    desc = "Set the background color of the custom tooltip.",
+                    hasAlpha = true,
+                    get = function()
+                        local c = ClickToCastTooltip.db.global.tooltipBackgroundColor
+                        local a = tonumber("0x"..c:sub(1,2))/255
+                        local r = tonumber("0x"..c:sub(3,4))/255
+                        local g = tonumber("0x"..c:sub(5,6))/255
+                        local b = tonumber("0x"..c:sub(7,8))/255
+                        return r, g, b, a
+                    end,
+                    set = function(_, r, g, b, a)
+                        ClickToCastTooltip.db.global.tooltipBackgroundColor = string.format("%02x%02x%02x%02x", a*255, r*255, g*255, b*255)
+                        if addonTable.applyTooltipTheme then
+                            addonTable.applyTooltipTheme()
+                        end
+                    end,
+                    order = 10,
+                },
+                tooltipBorderColor = {
+                    type = "color",
+                    name = "Border Color",
+                    desc = "Set the border color of the custom tooltip.",
+                    hasAlpha = true,
+                    get = function()
+                        local c = ClickToCastTooltip.db.global.tooltipBorderColor
+                        local a = tonumber("0x"..c:sub(1,2))/255
+                        local r = tonumber("0x"..c:sub(3,4))/255
+                        local g = tonumber("0x"..c:sub(5,6))/255
+                        local b = tonumber("0x"..c:sub(7,8))/255
+                        return r, g, b, a
+                    end,
+                    set = function(_, r, g, b, a)
+                        ClickToCastTooltip.db.global.tooltipBorderColor = string.format("%02x%02x%02x%02x", a*255, r*255, g*255, b*255)
+                        if addonTable.applyTooltipTheme then
+                            addonTable.applyTooltipTheme()
+                        end
+                    end,
+                    order = 11,
+                },
+                tooltipFontSize = {
+                    type = "range",
+                    name = "Font Size",
+                    desc = "Set the font size for tooltip text.",
+                    min = 8, max = 24, step = 1,
+                    get = function() return ClickToCastTooltip.db.global.tooltipFontSize end,
+                    set = function(_, val)
+                        ClickToCastTooltip.db.global.tooltipFontSize = val
+                        if addonTable.applyTooltipTheme then
+                            addonTable.applyTooltipTheme()
+                        end
+                    end,
+                    order = 20,
+                },
+                tooltipScale = {
+                    type = "range",
+                    name = "Tooltip Scale",
+                    desc = "Set the overall scale of the custom tooltip.",
+                    min = 0.5, max = 2.0, step = 0.05,
+                    get = function() return ClickToCastTooltip.db.global.tooltipScale end,
+                    set = function(_, val)
+                        ClickToCastTooltip.db.global.tooltipScale = val
+                        if addonTable.applyTooltipTheme then
+                            addonTable.applyTooltipTheme()
+                        end
+                    end,
+                    order = 21,
+                },
+                tooltipPadding = {
+                    type = "range",
+                    name = "Padding",
+                    desc = "Set the internal padding of the tooltip.",
+                    min = 0, max = 20, step = 1,
+                    get = function() return ClickToCastTooltip.db.global.tooltipPadding end,
+                    set = function(_, val)
+                        ClickToCastTooltip.db.global.tooltipPadding = val
+                        if addonTable.applyTooltipTheme then
+                            addonTable.applyTooltipTheme()
+                        end
+                    end,
+                    order = 22,
+                },
+                tooltipSquareCorners = {
+                    type = "toggle",
+                    name = "Square Corners",
+                    desc = "Use square corners instead of rounded corners on the tooltip.",
+                    get = function() return ClickToCastTooltip.db.global.tooltipSquareCorners end,
+                    set = function(_, val)
+                        ClickToCastTooltip.db.global.tooltipSquareCorners = val
+                        if addonTable.applyTooltipTheme then
+                            addonTable.applyTooltipTheme()
+                        end
+                    end,
+                    order = 23,
+                },
+                tooltipBackgroundTexture = {
+                    type = "select",
+                    name = "Background Texture",
+                    desc = "Choose the background texture for the tooltip.",
+                    values = {
+                        [1] = "Default Tooltip",
+                        [2] = "Solid",
+                        [3] = "Blizzard Dialog",
+                        [4] = "Parchment",
+                        [5] = "Dark Stone",
+                    },
+                    get = function() return ClickToCastTooltip.db.global.tooltipBackgroundTexture end,
+                    set = function(_, val)
+                        ClickToCastTooltip.db.global.tooltipBackgroundTexture = val
+                        if addonTable.applyTooltipTheme then
+                            addonTable.applyTooltipTheme()
+                        end
+                    end,
+                    order = 24,
+                },
+                tooltipBorderTexture = {
+                    type = "select",
+                    name = "Border Texture",
+                    desc = "Choose the border texture for the tooltip.",
+                    values = {
+                        [1] = "Default Tooltip",
+                        [2] = "Solid (1px)",
+                        [3] = "Blizzard Dialog",
+                        [4] = "Gold",
+                        [5] = "None",
+                    },
+                    get = function() return ClickToCastTooltip.db.global.tooltipBorderTexture end,
+                    set = function(_, val)
+                        ClickToCastTooltip.db.global.tooltipBorderTexture = val
+                        if addonTable.applyTooltipTheme then
+                            addonTable.applyTooltipTheme()
+                        end
+                    end,
+                    order = 25,
+                },
+                resetTheme = {
+                    type = "execute",
+                    name = "Reset Theme",
+                    desc = "Reset all theme settings to their default values.",
+                    func = function()
+                        ClickToCastTooltip.db.global.tooltipBackgroundColor = defaults.global.tooltipBackgroundColor
+                        ClickToCastTooltip.db.global.tooltipBorderColor = defaults.global.tooltipBorderColor
+                        ClickToCastTooltip.db.global.tooltipFontSize = defaults.global.tooltipFontSize
+                        ClickToCastTooltip.db.global.tooltipScale = defaults.global.tooltipScale
+                        ClickToCastTooltip.db.global.tooltipPadding = defaults.global.tooltipPadding
+                        ClickToCastTooltip.db.global.tooltipSquareCorners = defaults.global.tooltipSquareCorners
+                        ClickToCastTooltip.db.global.tooltipBackgroundTexture = defaults.global.tooltipBackgroundTexture
+                        ClickToCastTooltip.db.global.tooltipBorderTexture = defaults.global.tooltipBorderTexture
+                        ClickToCastTooltip.db.global.useElvUITheme = defaults.global.useElvUITheme
+                        if addonTable.applyTooltipTheme then
+                            addonTable.applyTooltipTheme()
+                        end
+                    end,
+                    order = 30,
+                },
+            }
         },
         resetColors = {
             type = "execute",

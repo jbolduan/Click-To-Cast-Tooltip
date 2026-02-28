@@ -21,8 +21,150 @@ addonTable.anchorMap = {
 -- Create the Blizzard tooltip reference
 addonTable.blizzardToolTip = GameTooltip
 
--- Create the custom floating tooltip
-addonTable.clickCastingTooltip = CreateFrame("GameTooltip", "ClickToCastCustomTooltip", UIParent, "GameTooltipTemplate")
+-- Create the custom floating tooltip with BackdropTemplate for texture support
+addonTable.clickCastingTooltip = CreateFrame("GameTooltip", "ClickToCastCustomTooltip", UIParent, "GameTooltipTemplate,BackdropTemplate")
+
+-- ============================================================================
+-- Tooltip Theme Application
+-- ============================================================================
+
+--- Parses a hex color string (AARRGGBB format) into RGBA values
+-- @param hexColor string: The hex color string (e.g., "ff1a1a2e")
+-- @return number, number, number, number: r, g, b, a values (0-1 range)
+local function parseHexColor(hexColor)
+    if not hexColor or #hexColor < 8 then
+        return 0, 0, 0, 1
+    end
+    local a = tonumber("0x" .. hexColor:sub(1, 2)) / 255
+    local r = tonumber("0x" .. hexColor:sub(3, 4)) / 255
+    local g = tonumber("0x" .. hexColor:sub(5, 6)) / 255
+    local b = tonumber("0x" .. hexColor:sub(7, 8)) / 255
+    return r, g, b, a
+end
+
+--- Applies the theme settings to the custom tooltip
+function addonTable.applyTooltipTheme()
+    local db = ClickToCastTooltip and ClickToCastTooltip.db and ClickToCastTooltip.db.global
+    if not db then return end
+    
+    local tooltip = addonTable.clickCastingTooltip
+    if not tooltip then return end
+    
+    -- Check if ElvUI theme should be used
+    if db.useElvUITheme and ElvUI and ElvUI[1] then
+        local E = ElvUI[1]
+        -- Show NineSlice if it was hidden
+        if tooltip.NineSlice then
+            tooltip.NineSlice:Show()
+        end
+        -- Apply ElvUI template if available
+        if tooltip.SetTemplate then
+            tooltip:SetTemplate("Transparent")
+        elseif E.Skins and E.Skins.HandleTooltip then
+            E.Skins:HandleTooltip(tooltip)
+        end
+        -- Apply scale
+        local scale = db.tooltipScale or 1.0
+        tooltip:SetScale(scale)
+        return
+    end
+    
+    -- Apply scale
+    local scale = db.tooltipScale or 1.0
+    tooltip:SetScale(scale)
+    
+    -- Apply background and border colors
+    local bgR, bgG, bgB, bgA = parseHexColor(db.tooltipBackgroundColor or "ff1a1a2e")
+    local borderR, borderG, borderB, borderA = parseHexColor(db.tooltipBorderColor or "ff4a4a6a")
+    
+    -- Background texture mapping
+    local backgroundTextures = {
+        [1] = "Interface\\Tooltips\\UI-Tooltip-Background",
+        [2] = "Interface\\Buttons\\WHITE8X8",
+        [3] = "Interface\\DialogFrame\\UI-DialogBox-Background",
+        [4] = "Interface\\ACHIEVEMENTFRAME\\UI-Achievement-Parchment-Horizontal",
+        [5] = "Interface\\FrameGeneral\\UI-Background-Rock",
+    }
+    
+    -- Border texture mapping
+    local borderTextures = {
+        [1] = "Interface\\Tooltips\\UI-Tooltip-Border",
+        [2] = "Interface\\Buttons\\WHITE8X8",
+        [3] = "Interface\\DialogFrame\\UI-DialogBox-Border",
+        [4] = "Interface\\DialogFrame\\UI-DialogBox-Gold-Border",
+        [5] = nil, -- No border
+    }
+    
+    -- Determine textures based on settings
+    local squareCorners = db.tooltipSquareCorners or false
+    local bgTextureIndex = db.tooltipBackgroundTexture or 1
+    local borderTextureIndex = db.tooltipBorderTexture or 1
+    
+    local bgFile = backgroundTextures[bgTextureIndex] or backgroundTextures[1]
+    local edgeFile = borderTextures[borderTextureIndex]
+    
+    -- Override edge file for square corners if using default border
+    if squareCorners and borderTextureIndex == 1 then
+        edgeFile = "Interface\\Buttons\\WHITE8X8"
+    end
+    
+    local edgeSize = 16
+    if borderTextureIndex == 2 or (squareCorners and borderTextureIndex == 1) then
+        edgeSize = 1
+    elseif borderTextureIndex == 5 then
+        edgeSize = 0
+    end
+    
+    -- Set backdrop if available (modern WoW uses NineSlice)
+    if tooltip.SetBackdrop then
+        -- Hide the default NineSlice if it exists
+        if tooltip.NineSlice then
+            tooltip.NineSlice:Hide()
+        end
+        
+        tooltip:SetBackdrop({
+            bgFile = bgFile,
+            edgeFile = edgeFile,
+            tile = true,
+            tileSize = 16,
+            edgeSize = edgeSize,
+            insets = { left = 0, right = 0, top = 0, bottom = 0 }
+        })
+        tooltip:SetBackdropColor(bgR, bgG, bgB, bgA)
+        tooltip:SetBackdropBorderColor(borderR, borderG, borderB, borderA)
+    elseif tooltip.NineSlice then
+        -- Fallback: Try to apply to NineSlice (if SetBackdrop not available)
+        if tooltip.NineSlice.SetCenterColor then
+            tooltip.NineSlice:SetCenterColor(bgR, bgG, bgB, bgA)
+        end
+        if tooltip.NineSlice.SetBorderColor then
+            tooltip.NineSlice:SetBorderColor(borderR, borderG, borderB, borderA)
+        end
+    end
+    
+    -- Apply font size to tooltip text regions
+    local fontSize = db.tooltipFontSize or 12
+    local tooltipName = tooltip:GetName()
+    if tooltipName then
+        -- Apply to all text lines
+        for i = 1, 30 do
+            local leftText = _G[tooltipName .. "TextLeft" .. i]
+            local rightText = _G[tooltipName .. "TextRight" .. i]
+            if leftText and leftText.GetFont and leftText.SetFont then
+                local path = leftText:GetFont()
+                if path then
+                    leftText:SetFont(path, fontSize, "")
+                end
+            end
+            if rightText and rightText.GetFont and rightText.SetFont then
+                local path = rightText:GetFont()
+                if path then
+                    rightText:SetFont(path, fontSize, "")
+                end
+            end
+        end
+    end
+end
 
 -- Timer reference for frame clear scheduling
 local clearTimer = nil
@@ -34,10 +176,133 @@ function addonTable.scheduleFrameClear(frame)
         clearTimer:Cancel()
     end
     clearTimer = C_Timer.NewTimer(0.1, function()
-        if frame and not frame:IsMouseOver() then
+        -- Only clear if the frame being left is still the tracked frame
+        -- This prevents clearing when we've already moved to a different frame
+        if frame and frame == addonTable.lastHoveredFrame and not frame:IsMouseOver() then
             addonTable.lastHoveredFrame = nil
         end
     end)
+end
+
+-- ============================================================================
+-- Unit Frame Type Detection
+-- Determines the type of unit frame for filtering purposes
+-- ============================================================================
+
+--- Determines the unit frame type category for a given frame
+-- @param frame Frame: The unit frame to check
+-- @return string: The unit frame type category (player, target, focus, party, raid, boss, arena, pet, targettarget, npc, or unknown)
+function addonTable.getUnitFrameType(frame)
+    if not frame then return "unknown" end
+    
+    local frameName = frame:GetName() or ""
+    local unit = frame.unit
+    
+    -- Try to extract unit from the frame name if not directly available
+    if not unit and frame.GetAttribute then
+        unit = frame:GetAttribute("unit")
+    end
+    
+    local lowerName = frameName:lower()
+    local lowerUnit = unit and unit:lower() or ""
+    
+    -- Check frame name patterns first (more reliable for addon frames)
+    -- NPC frames (Cell addon)
+    if lowerName:find("npc") then
+        return "npc"
+    end
+    
+    -- Pet frames
+    if lowerName:find("pet") or lowerUnit:find("pet") then
+        return "pet"
+    end
+    
+    -- Arena frames
+    if lowerName:find("arena") or lowerUnit:find("arena") then
+        return "arena"
+    end
+    
+    -- Boss frames
+    if lowerName:find("boss") or lowerUnit:find("boss") then
+        return "boss"
+    end
+    
+    -- Target of Target / Focus Target frames
+    if lowerName:find("tot") or lowerName:find("targettarget") or lowerName:find("focustarget")
+       or lowerUnit == "targettarget" or lowerUnit == "focustarget" then
+        return "targettarget"
+    end
+    
+    -- Raid frames (check before party since some raid frames might contain "party" in name)
+    if lowerName:find("raid") or lowerName:find("compactraidgroup")
+       or (unit and unit:match("^raid%d+$")) then
+        return "raid"
+    end
+    
+    -- Party frames
+    if lowerName:find("party") or lowerName:find("compactparty")
+       or (unit and unit:match("^party%d+$")) then
+        return "party"
+    end
+    
+    -- Focus frame
+    if lowerName:find("focus") or lowerUnit == "focus" then
+        return "focus"
+    end
+    
+    -- Target frame
+    if lowerName:find("target") or lowerUnit == "target" then
+        return "target"
+    end
+    
+    -- Player frame
+    if lowerName:find("player") or lowerUnit == "player" then
+        return "player"
+    end
+    
+    -- If we have a unit, try to determine type from it
+    if unit then
+        if unit:match("^raid%d+$") then return "raid" end
+        if unit:match("^party%d+$") then return "party" end
+        if unit:match("pet") then return "pet" end
+        if unit:match("boss") then return "boss" end
+        if unit:match("arena") then return "arena" end
+    end
+    
+    return "unknown"
+end
+
+--- Checks if tooltip should be shown for a given frame based on unit frame type settings
+-- @param frame Frame: The unit frame to check
+-- @return boolean: True if tooltip should be shown, false otherwise
+function addonTable.shouldShowForUnitFrameType(frame)
+    local db = ClickToCastTooltip and ClickToCastTooltip.db and ClickToCastTooltip.db.global
+    if not db then return true end -- Default to showing if no settings
+    
+    local frameType = addonTable.getUnitFrameType(frame)
+    
+    -- Map frame types to settings keys
+    local typeToSetting = {
+        player = "unitFramePlayer",
+        target = "unitFrameTarget",
+        focus = "unitFrameFocus",
+        party = "unitFrameParty",
+        raid = "unitFrameRaid",
+        boss = "unitFrameBoss",
+        arena = "unitFrameArena",
+        pet = "unitFramePet",
+        targettarget = "unitFrameTargetOfTarget",
+        npc = "unitFrameNPC",
+        unknown = nil, -- Always show for unknown types
+    }
+    
+    local settingKey = typeToSetting[frameType]
+    if not settingKey then return true end -- No setting for this type, show by default
+    
+    local settingValue = db[settingKey]
+    if settingValue == nil then return true end -- Setting not configured, show by default
+    
+    return settingValue
 end
 
 -- Frame handler initialization (placeholder for backward compatibility)
