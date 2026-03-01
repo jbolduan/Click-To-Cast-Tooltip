@@ -12,15 +12,6 @@ addonTable.clickCastingTooltip:RegisterEvent("MODIFIER_STATE_CHANGED")
 -- Initialize Frame Handlers
 addonTable.frameHandler.init()
 
--- Track which unit we've already added content for
--- This prevents duplicates when TooltipDataProcessor fires multiple times
-local lastProcessedGUID = nil
-
--- Reset tracking when tooltip is hidden
-GameTooltip:HookScript("OnHide", function(self)
-    lastProcessedGUID = nil
-end)
-
 -- ============================================================================
 -- Tooltip Builder Functions
 -- ============================================================================
@@ -86,37 +77,39 @@ local function clickToCastTooltipBuilder(frame)
     end
 end
 
---- Builds and displays the Blizzard tooltip with click binding info.
--- @param tooltip GameTooltip: The Blizzard tooltip frame
+--- Adds click binding info to the Blizzard GameTooltip.
+-- Only adds content if hovering over a supported unit frame.
+-- @param tooltip GameTooltip: The tooltip frame (from TooltipDataProcessor)
 local function blizzardTooltipBuilder(tooltip)
-    -- Guard against nil tooltip or non-GameTooltip frames
-    if not tooltip or tooltip ~= GameTooltip then
+    -- Only process GameTooltip
+    if tooltip ~= GameTooltip then
         return
     end
     
-    -- Only show on hooked unit frames, not world units
-    -- Check if we're actually hovering over a tracked unit frame
-    if not addonTable.lastHoveredFrame or not addonTable.lastHoveredFrame:IsMouseOver() then
+    -- Check if the mouse is over one of our hooked frames
+    local mouseFoci = GetMouseFoci and GetMouseFoci() or (GetMouseFocus and {GetMouseFocus()} or {})
+    if #mouseFoci == 0 then
         return
     end
     
-    -- Get the unit being displayed
-    local _, unit = tooltip:GetUnit()
-    if not unit then
-        return
+    -- Walk up the parent chain to find a hooked frame
+    local hookedFrame = nil
+    for _, mouseFrame in ipairs(mouseFoci) do
+        local checkFrame = mouseFrame
+        while checkFrame do
+            if addonTable.hookedFrames[checkFrame] then
+                hookedFrame = checkFrame
+                break
+            end
+            checkFrame = checkFrame:GetParent()
+        end
+        if hookedFrame then break end
     end
     
-    -- Use pcall to handle tainted unit values during secure execution (e.g., in dungeons)
-    local success, unitGUID = pcall(UnitGUID, unit)
-    if not success then
+    -- Only show on hooked unit frames
+    if not hookedFrame then
         return
     end
-    
-    -- Prevent duplicate content - only add once per unit
-    if unitGUID and unitGUID == lastProcessedGUID then
-        return
-    end
-    lastProcessedGUID = unitGUID
     
     local db = ClickToCastTooltip and ClickToCastTooltip.db and ClickToCastTooltip.db.global
 
@@ -125,7 +118,7 @@ local function blizzardTooltipBuilder(tooltip)
     end
     
     -- Check if this unit frame type should show the tooltip
-    if not addonTable.shouldShowForUnitFrameType(addonTable.lastHoveredFrame) then
+    if not addonTable.shouldShowForUnitFrameType(hookedFrame) then
         return
     end
 
@@ -133,26 +126,29 @@ local function blizzardTooltipBuilder(tooltip)
     local nonBlankLineCount = {value = 0}
 
     if db and type(db.showNewLineTop) == "boolean" and db.showNewLineTop then
-        tooltip:AddLine(" ")
+        GameTooltip:AddLine(" ")
     end
 
     if db and type(db.showHeader) == "boolean" and db.showHeader then
         local dividerColor = CreateColorFromHexString(db.dividerColor)
         local headerLine = dividerColor:WrapTextInColorCode("--------------------")
-        tooltip:AddLine(headerLine)
+        GameTooltip:AddLine(headerLine)
     end
 
-    addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
+    addonTable.updateTooltip(db, clickBindings, GameTooltip, nonBlankLineCount)
 
     if db and type(db.showFooter) == "boolean" and db.showFooter then
         local dividerColor = CreateColorFromHexString(db.dividerColor)
         local footerLine = dividerColor:WrapTextInColorCode("--------------------")
-        tooltip:AddLine(footerLine)
+        GameTooltip:AddLine(footerLine)
     end
 
     if db and type(db.showNewLineBottom) == "boolean" and db.showNewLineBottom then
-        tooltip:AddLine(" ")
+        GameTooltip:AddLine(" ")
     end
+    
+    -- Refresh the tooltip to show the new content
+    GameTooltip:Show()
 end
 
 --- Hides and cleans up the custom tooltip.
@@ -184,8 +180,7 @@ addonTable.clickCastingTooltip:SetScript("OnEvent", function(self, event, ...)
 end)
 
 -- Register with Blizzard's tooltip processor
--- Note: Blizzard tooltip can't be refreshed on modifier change without duplicating content
--- The custom floating tooltip handles modifier changes instead
+-- Only adds content when mouse is over a hooked unit frame (checks via GetMouseFoci)
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, blizzardTooltipBuilder)
 
 -- ============================================================================
