@@ -1,7 +1,7 @@
 ## Interface: 120000, 120001
 ## Title: Click to Cast Tooltip
 ## Author: theGimpboy
-## Version: 3.0.1
+## Version: 3.1.0
 ## Notes: Adds the click to cast spells and macros to the tooltip.
 ## SavedVariables: ClickToCastTooltipDB
 ## X-Website: https://github.com/jbolduan/Click-To-Cast-Tooltip
@@ -9,7 +9,7 @@
 ## X-Wago-ID: BKpqAyGE
 ## X-WoWI-ID: 26824
 ## DefaultState: Enabled
-## OptionalDeps: ElvUI, Clique, Cell, Grid2, ShadowedUnitFrames, Tukui, UnhaltedUnitFrames
+## OptionalDeps: ElvUI, Clique, Cell, Grid2, ShadowedUnitFrames, Tukui, UnhaltedUnitFrames, DandersFrames
 
 # Ace3 Library Dependencies
 libraries\Ace3\LibStub\LibStub.lua
@@ -35,6 +35,7 @@ FrameHandlers\Grid2.lua
 FrameHandlers\ShadowedUnitFrames.lua
 FrameHandlers\TukUI.lua
 FrameHandlers\UnhaltedUnitFrames.lua
+FrameHandlers\DandersFrames.lua
 
 # Settings and Main
 Click-To-Cast-Tooltip-Settings.lua

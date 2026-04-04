@@ -76,6 +76,7 @@ All settings are available in the options panel. Here’s what you can configure
 - Grid2: All raid and party frames (e.g., Grid2LayoutHeader1UnitButton1, etc.)
 - Shadowed Unit Frames (SUF): Player, pet, target, focus, raid, main tank, main assist, and more (e.g., SUFHeaderraidUnitButton1, SUFHeadermaintankUnitButton1, etc.)
 - TukUI: Player, target, focus, pet, party, and raid frames
+- DandersFrames: Party, raid (grouped and flat), arena, and pet frames
 
 ## Clique Addon Support
 
