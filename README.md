@@ -91,3 +91,4 @@ When you hover over a unit frame, the addon scans your click-cast bindings and d
 ## Feedback & Support
 
 If you encounter issues or have feature requests, please open an issue on GitHub.
+

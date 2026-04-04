@@ -326,7 +326,341 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
     
     local buttonColor = CreateColorFromHexString(db.buttonColor or "ffff0000")
     local actionColor = CreateColorFromHexString(db.actionColor or "ff00ff00")
+    local gridMode = db.tooltipGridLayout == true
+    local useMouseButtonIcons = db.tooltipUseMouseButtonIcons == true
+    local baseFontSize = db.tooltipFontSize or 12
+    local iconSize = math.max(10, math.min(24, baseFontSize + 2))
+    local useGridFrame = gridMode and tooltip == addonTable.clickCastingTooltip
+
+    local gridBuckets = {
+        left = {},
+        middle = {},
+        right = {},
+    }
+
+    local gridSeen = {
+        left = {},
+        middle = {},
+        right = {},
+    }
+
+    local function classifyMouseButton(buttonText)
+        if not buttonText then return nil end
+        local lower = tostring(buttonText):lower()
+
+        if lower:find("button1") or lower:find("leftbutton") or lower:find("left click") then
+            return "left"
+        elseif lower:find("button2") or lower:find("rightbutton") or lower:find("right click") then
+            return "right"
+        elseif lower:find("button3") or lower:find("middlebutton") or lower:find("middle click") then
+            return "middle"
+        end
+
+        return nil
+    end
+
+    local function addGridAction(buttonText, actionName)
+        local slot = classifyMouseButton(buttonText)
+        if not slot then return false end
+        if not actionName or actionName == "" then return true end
+
+        if not gridSeen[slot][actionName] then
+            gridSeen[slot][actionName] = true
+            table.insert(gridBuckets[slot], actionName)
+        end
+
+        return true
+    end
+
+    local function iconForSlot(slot, size)
+        if slot == "left" then
+            return "|TInterface\\Buttons\\UI-SpellbookIcon-PrevPage-Up:" .. size .. ":" .. size .. ":0:0|t"
+        elseif slot == "middle" then
+            return "|TInterface\\Buttons\\UI-Panel-MinimizeButton-Up:" .. size .. ":" .. size .. ":0:0|t"
+        elseif slot == "right" then
+            return "|TInterface\\Buttons\\UI-SpellbookIcon-NextPage-Up:" .. size .. ":" .. size .. ":0:0|t"
+        end
+
+        return nil
+    end
+
+    local function displayButtonText(buttonText)
+        if not useMouseButtonIcons then
+            return tostring(buttonText)
+        end
+
+        local slot = classifyMouseButton(buttonText)
+        return iconForSlot(slot, iconSize) or tostring(buttonText)
+    end
+
+    local function displayHeaderText(slot, text)
+        if not useMouseButtonIcons then
+            return text
+        end
+
+        return iconForSlot(slot, iconSize) or text
+    end
+
+    local function emitStandardLine(buttonText, actionName)
+        local lineText = buttonColor:WrapTextInColorCode(displayButtonText(buttonText)) .. " - " .. actionColor:WrapTextInColorCode(actionName)
+        if lineText:match("%S") then
+            nonBlankLineCount.value = nonBlankLineCount.value + 1
+            tooltip:AddLine(lineText)
+        end
+    end
+
+    local function emitBinding(buttonText, actionName)
+        if gridMode and addGridAction(buttonText, actionName) then
+            return
+        end
+        emitStandardLine(buttonText, actionName)
+    end
+
+    local function ensureCustomGridFrame(ownerTooltip)
+        addonTable.gridLayoutFrames = addonTable.gridLayoutFrames or {}
+
+        if addonTable.gridLayoutFrames[ownerTooltip] then
+            return addonTable.gridLayoutFrames[ownerTooltip]
+        end
+
+        local frame = CreateFrame("Frame", nil, ownerTooltip)
+        frame:SetPoint("TOPLEFT", ownerTooltip, "TOPLEFT", 8, -8)
+
+        frame.leftHeader = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        frame.leftHeader:SetJustifyH("CENTER")
+        frame.leftHeader:SetText("Left")
+
+        frame.middleHeader = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        frame.middleHeader:SetJustifyH("CENTER")
+        frame.middleHeader:SetText("Middle")
+
+        frame.rightHeader = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        frame.rightHeader:SetJustifyH("CENTER")
+        frame.rightHeader:SetText("Right")
+
+        frame.separator = frame:CreateTexture(nil, "BORDER")
+        frame.separator:SetColorTexture(0.75, 0.66, 0.32, 0.45)
+        frame.separator:SetHeight(1)
+        frame.separator:SetPoint("TOPLEFT", frame, "TOPLEFT", 2, -22)
+        frame.separator:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -2, -22)
+
+        frame.colSeparator1 = frame:CreateTexture(nil, "BORDER")
+        frame.colSeparator1:SetColorTexture(0.70, 0.62, 0.30, 0.20)
+        frame.colSeparator1:SetWidth(1)
+
+        frame.colSeparator2 = frame:CreateTexture(nil, "BORDER")
+        frame.colSeparator2:SetColorTexture(0.70, 0.62, 0.30, 0.20)
+        frame.colSeparator2:SetWidth(1)
+
+        frame.leftBody = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        frame.leftBody:SetJustifyH("CENTER")
+        frame.leftBody:SetJustifyV("TOP")
+
+        frame.middleBody = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        frame.middleBody:SetJustifyH("CENTER")
+        frame.middleBody:SetJustifyV("TOP")
+
+        frame.rightBody = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        frame.rightBody:SetJustifyH("CENTER")
+        frame.rightBody:SetJustifyV("TOP")
+
+        addonTable.gridLayoutFrames[ownerTooltip] = frame
+        return frame
+    end
+
+    local function emitCustomGridFrame()
+        local hasAny = (#gridBuckets.left + #gridBuckets.middle + #gridBuckets.right) > 0
+        if not hasAny then
+            if addonTable.gridLayoutFrames and addonTable.gridLayoutFrames[tooltip] then
+                addonTable.gridLayoutFrames[tooltip]:Hide()
+            end
+            if tooltip == addonTable.clickCastingTooltip then
+                addonTable.customGridTooltipWidth = nil
+                addonTable.customGridTooltipHeight = nil
+            end
+            return
+        end
+
+        local frame = ensureCustomGridFrame(tooltip)
+        local frameInset = math.max(4, math.floor((db.tooltipPadding or 8) * 0.75))
+        frame:ClearAllPoints()
+        frame:SetPoint("TOPLEFT", tooltip, "TOPLEFT", frameInset, -frameInset)
+
+        local rB, gB, bB = buttonColor:GetRGB()
+        local rA, gA, bA = actionColor:GetRGB()
+        local dividerHex = db.dividerColor or "ffffffff"
+        local borderHex = db.tooltipBorderColor or "ff4a4a6a"
+        local dividerColor = CreateColorFromHexString(dividerHex)
+        local borderColor = CreateColorFromHexString(borderHex)
+
+        local dividerR, dividerG, dividerB = dividerColor:GetRGB()
+        local borderR, borderG, borderB = borderColor:GetRGB()
+
+        local function applyFontSize(fontString, size)
+            if not fontString or not fontString.GetFont or not fontString.SetFont then return end
+            local path, _, flags = fontString:GetFont()
+            if path then
+                fontString:SetFont(path, size, flags or "")
+            end
+        end
+
+        local headerFontSize = math.max(10, baseFontSize)
+        local bodyFontSize = math.max(10, baseFontSize)
+
+        applyFontSize(frame.leftHeader, headerFontSize)
+        applyFontSize(frame.middleHeader, headerFontSize)
+        applyFontSize(frame.rightHeader, headerFontSize)
+        applyFontSize(frame.leftBody, bodyFontSize)
+        applyFontSize(frame.middleBody, bodyFontSize)
+        applyFontSize(frame.rightBody, bodyFontSize)
+
+        frame.leftHeader:SetTextColor(rB, gB, bB)
+        frame.middleHeader:SetTextColor(rB, gB, bB)
+        frame.rightHeader:SetTextColor(rB, gB, bB)
+
+        frame.leftHeader:SetText(displayHeaderText("left", "Left"))
+        frame.middleHeader:SetText(displayHeaderText("middle", "Middle"))
+        frame.rightHeader:SetText(displayHeaderText("right", "Right"))
+
+        frame.leftBody:SetTextColor(rA, gA, bA)
+        frame.middleBody:SetTextColor(rA, gA, bA)
+        frame.rightBody:SetTextColor(rA, gA, bA)
+
+        frame.separator:SetColorTexture(dividerR, dividerG, dividerB, 0.50)
+        frame.colSeparator1:SetColorTexture(borderR, borderG, borderB, 0.42)
+        frame.colSeparator2:SetColorTexture(borderR, borderG, borderB, 0.42)
+
+        local function bucketBodyText(bucket)
+            if #bucket == 0 then
+                return ""
+            end
+            return table.concat(bucket, "\n")
+        end
+
+        frame.leftBody:SetText(bucketBodyText(gridBuckets.left))
+        frame.middleBody:SetText(bucketBodyText(gridBuckets.middle))
+        frame.rightBody:SetText(bucketBodyText(gridBuckets.right))
+
+        -- Clear any previous width constraints so size calculations reflect true content width.
+        frame.leftHeader:SetWidth(0)
+        frame.middleHeader:SetWidth(0)
+        frame.rightHeader:SetWidth(0)
+        frame.leftBody:SetWidth(0)
+        frame.middleBody:SetWidth(0)
+        frame.rightBody:SetWidth(0)
+
+        local leftHasContent = #gridBuckets.left > 0
+        local middleHasContent = #gridBuckets.middle > 0
+        local rightHasContent = #gridBuckets.right > 0
+
+        local screenWidth = (UIParent and UIParent.GetWidth and UIParent:GetWidth()) or 1920
+        local maxColumnWidth = math.max(170, math.floor(screenWidth * 0.28))
+
+        local function calcColumnWidth(headerFs, bodyFs, hasContent)
+            local headerWidth = (headerFs:GetStringWidth() or 0) + 6
+            local bodyWidth = hasContent and ((bodyFs:GetStringWidth() or 0) + 6) or 0
+            local minWidth = hasContent and 86 or 58
+            local maxWidth = maxColumnWidth
+            return math.max(minWidth, math.min(maxWidth, math.max(headerWidth, bodyWidth)))
+        end
+
+        local leftW = calcColumnWidth(frame.leftHeader, frame.leftBody, leftHasContent)
+        local middleW = calcColumnWidth(frame.middleHeader, frame.middleBody, middleHasContent)
+        local rightW = calcColumnWidth(frame.rightHeader, frame.rightBody, rightHasContent)
+
+        local headerRowHeight = math.max(
+            headerFontSize + 2,
+            frame.leftHeader:GetStringHeight() or 0,
+            frame.middleHeader:GetStringHeight() or 0,
+            frame.rightHeader:GetStringHeight() or 0,
+            useMouseButtonIcons and iconSize or 0
+        )
+        local headerTopPad = 3
+        local headerBottomPad = 3
+        local separatorY = -(headerTopPad + headerRowHeight + headerBottomPad)
+        local bodyTopPad = 4
+        local bodyStartY = separatorY - bodyTopPad
+
+        local colGap = 4
+        local innerPad = 5
+        local leftX = innerPad
+        local middleX = leftX + leftW + colGap
+        local rightX = middleX + middleW + colGap
+        local width = (innerPad * 2) + leftW + middleW + rightW + (colGap * 2)
+
+        frame.leftHeader:ClearAllPoints()
+        frame.leftHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", leftX, -headerTopPad)
+        frame.leftHeader:SetWidth(leftW)
+        frame.middleHeader:ClearAllPoints()
+        frame.middleHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", middleX, -headerTopPad)
+        frame.middleHeader:SetWidth(middleW)
+        frame.rightHeader:ClearAllPoints()
+        frame.rightHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", rightX, -headerTopPad)
+        frame.rightHeader:SetWidth(rightW)
+
+        frame.separator:ClearAllPoints()
+        frame.separator:SetPoint("TOPLEFT", frame, "TOPLEFT", 2, separatorY)
+        frame.separator:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -2, separatorY)
+
+        frame.middleBody:ClearAllPoints()
+        frame.middleBody:SetPoint("TOPLEFT", frame, "TOPLEFT", middleX, bodyStartY)
+        frame.rightBody:ClearAllPoints()
+        frame.rightBody:SetPoint("TOPLEFT", frame, "TOPLEFT", rightX, bodyStartY)
+
+        frame.leftBody:ClearAllPoints()
+        frame.leftBody:SetPoint("TOPLEFT", frame, "TOPLEFT", leftX, bodyStartY)
+
+        frame.leftBody:SetWidth(leftW)
+        frame.middleBody:SetWidth(middleW)
+        frame.rightBody:SetWidth(rightW)
+
+        frame.colSeparator1:ClearAllPoints()
+        frame.colSeparator1:SetPoint("TOP", frame, "TOPLEFT", middleX - (colGap / 2), -3)
+        frame.colSeparator1:SetPoint("BOTTOM", frame, "BOTTOMLEFT", middleX - (colGap / 2), 3)
+
+        frame.colSeparator2:ClearAllPoints()
+        frame.colSeparator2:SetPoint("TOP", frame, "TOPLEFT", rightX - (colGap / 2), -3)
+        frame.colSeparator2:SetPoint("BOTTOM", frame, "BOTTOMLEFT", rightX - (colGap / 2), 3)
+
+        local bodyHeight = math.max(
+            bodyFontSize + 2,
+            frame.leftBody:GetStringHeight() or 14,
+            frame.middleBody:GetStringHeight() or 14,
+            frame.rightBody:GetStringHeight() or 14
+        )
+
+        local topSectionHeight = (headerTopPad + headerRowHeight + headerBottomPad + bodyTopPad)
+        local bottomPadding = 4
+        local height = topSectionHeight + bodyHeight + bottomPadding
+        frame:SetSize(width, height)
+        frame:Show()
+
+        -- Keep one real tooltip line so the GameTooltip frame always lays out/shows reliably.
+        tooltip:AddLine(" ")
+
+        -- Use frame content instead of text rows for body content.
+        if tooltip == addonTable.clickCastingTooltip and addonTable.clickCastingTooltip.SetMinimumWidth then
+            addonTable.clickCastingTooltip:SetMinimumWidth(width + (frameInset * 2))
+        elseif tooltip ~= addonTable.clickCastingTooltip and tooltip.SetMinimumWidth then
+            tooltip:SetMinimumWidth(width + (frameInset * 2))
+        end
+
+        if tooltip == addonTable.clickCastingTooltip then
+            addonTable.customGridTooltipWidth = width + (frameInset * 2)
+            addonTable.customGridTooltipHeight = height + (frameInset * 2)
+            addonTable.clickCastingTooltip:SetSize(addonTable.customGridTooltipWidth, addonTable.customGridTooltipHeight)
+        end
+        nonBlankLineCount.value = nonBlankLineCount.value + 1
+    end
     
+    if not useGridFrame and addonTable.gridLayoutFrames and addonTable.gridLayoutFrames[tooltip] then
+        addonTable.gridLayoutFrames[tooltip]:Hide()
+        if tooltip == addonTable.clickCastingTooltip then
+            addonTable.customGridTooltipWidth = nil
+            addonTable.customGridTooltipHeight = nil
+        end
+    end
+
     -- Track shown bindings to prevent duplicates
     local shownBindings = {}
     
@@ -386,11 +720,7 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
                 if not shownBindings[bindingKey] then
                     shownBindings[bindingKey] = true
                     
-                    local lineText = buttonColor:WrapTextInColorCode(binding.button) .. " - " .. actionColor:WrapTextInColorCode(actionName)
-                    if lineText:match("%S") then
-                        nonBlankLineCount.value = nonBlankLineCount.value + 1
-                        tooltip:AddLine(lineText)
-                    end
+                    emitBinding(binding.button, actionName)
                 end
             end
         end
@@ -448,16 +778,18 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
                                 displayText = displayText:gsub("ctrl%-", "Ctrl-")
                                 displayText = displayText:gsub("alt%-", "Alt-")
                                 
-                                local lineText = buttonColor:WrapTextInColorCode(displayText) .. " - " .. actionColor:WrapTextInColorCode(actionName)
-                                if lineText:match("%S") then
-                                    nonBlankLineCount.value = nonBlankLineCount.value + 1
-                                    tooltip:AddLine(lineText)
-                                end
+                                emitBinding(displayText, actionName)
                             end
                         end
                     end
                 end
             end
+        end
+    end
+
+    if gridMode then
+        if useGridFrame then
+            emitCustomGridFrame()
         end
     end
 end

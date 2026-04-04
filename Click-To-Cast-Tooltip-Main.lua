@@ -44,6 +44,8 @@ local function clickToCastTooltipBuilder(frame)
 
     local x, y = GetCursorPosition()
     local scale = UIParent:GetEffectiveScale()
+    local snappedX = math.floor((x / scale) + 0.5)
+    local snappedY = math.floor((y / scale) + 0.5)
     local anchor = "BOTTOMRIGHT"
     
     if db and type(db.tooltipAnchor) == "number" then
@@ -52,7 +54,7 @@ local function clickToCastTooltipBuilder(frame)
         anchor = db.tooltipAnchor
     end
     
-    addonTable.clickCastingTooltip:SetPoint(anchor, UIParent, "BOTTOMLEFT", x / scale, y / scale)
+    addonTable.clickCastingTooltip:SetPoint(anchor, UIParent, "BOTTOMLEFT", snappedX, snappedY)
     local nonBlankLineCount = {value = 0}
     
     addonTable.updateTooltip(db, clickBindings, addonTable.clickCastingTooltip, nonBlankLineCount)
@@ -63,13 +65,23 @@ local function clickToCastTooltipBuilder(frame)
         if addonTable.applyTooltipTheme then
             addonTable.applyTooltipTheme()
         end
+
+        if addonTable.customGridTooltipWidth and addonTable.customGridTooltipHeight then
+            addonTable.clickCastingTooltip:SetSize(addonTable.customGridTooltipWidth, addonTable.customGridTooltipHeight)
+        end
+
         addonTable.clickCastingTooltip:Show()
         
         addonTable.clickCastingTooltip:SetScript("OnUpdate", function(self)
             local x, y = GetCursorPosition()
             local scale = UIParent:GetEffectiveScale()
+            local snappedX = math.floor((x / scale) + 0.5)
+            local snappedY = math.floor((y / scale) + 0.5)
             self:ClearAllPoints()
-            self:SetPoint(anchor, UIParent, "BOTTOMLEFT", x / scale, y / scale)
+            self:SetPoint(anchor, UIParent, "BOTTOMLEFT", snappedX, snappedY)
+            if addonTable.customGridTooltipWidth and addonTable.customGridTooltipHeight then
+                self:SetSize(addonTable.customGridTooltipWidth, addonTable.customGridTooltipHeight)
+            end
             self:SetAlpha(db.tooltipTransparency)
         end)
     else
@@ -112,6 +124,10 @@ local function blizzardTooltipBuilder(tooltip)
     end
     
     local db = ClickToCastTooltip and ClickToCastTooltip.db and ClickToCastTooltip.db.global
+
+    if db and db.tooltipGridLayout == true then
+        return
+    end
 
     if db and db.showTooltip == false then
         return
@@ -161,6 +177,11 @@ local function clickToCastTooltipDestroyer(frame)
     end
     
     addonTable.clickCastingTooltip:SetScript("OnUpdate", nil)
+    if addonTable.gridLayoutFrames and addonTable.gridLayoutFrames[addonTable.clickCastingTooltip] then
+        addonTable.gridLayoutFrames[addonTable.clickCastingTooltip]:Hide()
+    end
+    addonTable.customGridTooltipWidth = nil
+    addonTable.customGridTooltipHeight = nil
     if addonTable.clickCastingTooltip:IsShown() then
         addonTable.clickCastingTooltip:Hide()
     end
