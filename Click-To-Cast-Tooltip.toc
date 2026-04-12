@@ -1,7 +1,7 @@
 ## Interface: 120000, 120001
 ## Title: Click to Cast Tooltip
 ## Author: theGimpboy
-## Version: 3.2.0
+## Version: 3.3.0
 ## Notes: Adds the click to cast spells and macros to the tooltip.
 ## SavedVariables: ClickToCastTooltipDB
 ## X-Website: https://github.com/jbolduan/Click-To-Cast-Tooltip
@@ -36,6 +36,11 @@ FrameHandlers\ShadowedUnitFrames.lua
 FrameHandlers\TukUI.lua
 FrameHandlers\UnhaltedUnitFrames.lua
 FrameHandlers\DandersFrames.lua
+
+# Click binding handlers
+clickCastingHandlers\Blizzard.lua
+clickCastingHandlers\Clique.lua
+clickCastingHandlers\Cell.lua
 
 # Settings and Main
 Click-To-Cast-Tooltip-Settings.lua

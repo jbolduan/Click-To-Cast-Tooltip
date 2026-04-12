@@ -20,7 +20,9 @@ local defaults = {
         tooltipAnchor = 9,
         showBlizzardBindings = true,
         showCliqueBindings = true,
+        showCellBindings = true,
         hasShownCliquePopup = false,
+        hasShownBindingSourcePopup = false,
         -- Theme settings
         tooltipBackgroundColor = "ff1a1a2e",
         tooltipBorderColor = "ff4a4a6a",
@@ -176,6 +178,16 @@ local options = {
                     get = function() return ClickToCastTooltip.db.global.showCliqueBindings end,
                     set = function(_, val) ClickToCastTooltip.db.global.showCliqueBindings = val end,
                     order = 8,
+                },
+                showCellBindings = {
+                    type = "toggle",
+                    width = "full",
+                    descStyle = "inline",
+                    name = "Show Cell addon bindings",
+                    desc = "Show Cell addon click-cast bindings in the tooltip (requires Cell addon).",
+                    get = function() return ClickToCastTooltip.db.global.showCellBindings end,
+                    set = function(_, val) ClickToCastTooltip.db.global.showCellBindings = val end,
+                    order = 8.1,
                 },
                 tooltipTransparency = {
                     type = "range",
@@ -594,6 +606,9 @@ local options = {
                     ClickToCastTooltip.db.global.showCustomTooltip = true
                     ClickToCastTooltip.db.global.tooltipUseMouseButtonIcons = false
                     ClickToCastTooltip.db.global.tooltipUseSpellIcons = false
+                    ClickToCastTooltip.db.global.showBlizzardBindings = true
+                    ClickToCastTooltip.db.global.showCliqueBindings = true
+                    ClickToCastTooltip.db.global.showCellBindings = true
                     ClickToCastTooltip.db.global.showHeader = false
                     ClickToCastTooltip.db.global.showFooter = false
                     ClickToCastTooltip.db.global.showNewLineTop = false
@@ -660,43 +675,171 @@ function ClickToCastTooltip:OnEnable()
         end
     end
     
-    -- Check for Clique and show popup if needed
-    self:CheckForCliqueAndShowPopup()
-end
-
-function ClickToCastTooltip:CheckForCliqueAndShowPopup()
-    -- Only show popup once and only if Clique is installed
-    ---@diagnostic disable-next-line: undefined-global
-    if not self.db.global.hasShownCliquePopup and Clique then
-        -- Delay popup to ensure UI is ready
-        C_Timer.After(2, function()
-            self:ShowCliquePopup()
-        end)
+    -- Migration: preserve one-time popup state from older Clique-only prompt.
+    if self.db.global.hasShownBindingSourcePopup == nil and self.db.global.hasShownCliquePopup then
+        self.db.global.hasShownBindingSourcePopup = true
     end
+
+    -- Check for available click-cast providers and ask user which single source to use.
+    self:CheckForBindingSourcePopup()
 end
 
--- Define the StaticPopup for Clique detection
-StaticPopupDialogs["CLICK_TO_CAST_TOOLTIP_CLIQUE_DETECTED"] = {
-    text = "Clique addon detected! Since you're using Clique for click-to-cast, would you like to disable the display of Blizzard's native click-to-cast bindings?\n\nThis will show only your Clique bindings in the tooltip, avoiding duplicate information.",
-    button1 = "Yes, disable Blizzard bindings",
-    button2 = "No, keep both",
-    OnAccept = function()
-        ClickToCastTooltip.db.global.showBlizzardBindings = false
-        ClickToCastTooltip.db.global.hasShownCliquePopup = true
-        print("|cff00ff00Click-To-Cast-Tooltip:|r Blizzard bindings disabled. You can re-enable them in the addon settings if needed.")
+local bindingSourceDefinitions = {
+    {
+        key = "blizzard",
+        label = "Blizzard",
+        toggleKey = "showBlizzardBindings",
+        isAvailable = function()
+            return addonTable.clickBindingHandlers
+                and addonTable.clickBindingHandlers.IsBlizzardAvailable
+                and addonTable.clickBindingHandlers.IsBlizzardAvailable()
+        end,
+    },
+    {
+        key = "clique",
+        label = "Clique",
+        toggleKey = "showCliqueBindings",
+        isAvailable = function()
+            return addonTable.clickBindingHandlers
+                and addonTable.clickBindingHandlers.IsCliqueAvailable
+                and addonTable.clickBindingHandlers.IsCliqueAvailable()
+        end,
+    },
+    {
+        key = "cell",
+        label = "Cell",
+        toggleKey = "showCellBindings",
+        isAvailable = function()
+            return addonTable.clickBindingHandlers
+                and addonTable.clickBindingHandlers.IsCellAvailable
+                and addonTable.clickBindingHandlers.IsCellAvailable()
+        end,
+    },
+}
+
+function ClickToCastTooltip:GetDetectedBindingSources()
+    local detected = {}
+
+    for _, source in ipairs(bindingSourceDefinitions) do
+        if source.isAvailable and source.isAvailable() then
+            table.insert(detected, source)
+        end
+    end
+
+    return detected
+end
+
+function ClickToCastTooltip:ApplyBindingSourceChoice(sourceKey)
+    if not sourceKey then
+        return
+    end
+
+    for _, source in ipairs(bindingSourceDefinitions) do
+        local isSelected = (source.key == sourceKey)
+        self.db.global[source.toggleKey] = isSelected
+    end
+
+    self.db.global.hasShownBindingSourcePopup = true
+    self.db.global.hasShownCliquePopup = true
+
+    print("|cff00ff00Click-To-Cast-Tooltip:|r Active click-cast source set to " .. sourceKey .. ".")
+end
+
+function ClickToCastTooltip:CheckForBindingSourcePopup()
+    if self.db.global.hasShownBindingSourcePopup then
+        return
+    end
+
+    local detected = self:GetDetectedBindingSources()
+    local hasNonBlizzard = false
+    for _, source in ipairs(detected) do
+        if source.key ~= "blizzard" then
+            hasNonBlizzard = true
+            break
+        end
+    end
+
+    if #detected <= 1 or not hasNonBlizzard then
+        return
+    end
+
+    -- Delay popup to ensure UI is ready.
+    C_Timer.After(2, function()
+        self:ShowBindingSourcePopup(detected)
+    end)
+end
+
+StaticPopupDialogs["CLICK_TO_CAST_TOOLTIP_BINDING_SOURCE_DETECTED"] = {
+    text = "Multiple click-cast providers were detected. Choose which source this addon should use:",
+    button1 = "Option 1",
+    button2 = "Option 2",
+    button3 = "Option 3",
+    OnShow = function(self, data)
+        local sources = data and data.sources or {}
+        local button1 = _G[self:GetName() .. "Button1"]
+        local button2 = _G[self:GetName() .. "Button2"]
+        local button3 = _G[self:GetName() .. "Button3"]
+
+        if button1 then
+            if sources[1] then
+                button1:SetText("Use " .. sources[1].label)
+                button1:Show()
+            else
+                button1:Hide()
+            end
+        end
+
+        if button2 then
+            if sources[2] then
+                button2:SetText("Use " .. sources[2].label)
+                button2:Show()
+            else
+                button2:Hide()
+            end
+        end
+
+        if button3 then
+            if sources[3] then
+                button3:SetText("Use " .. sources[3].label)
+                button3:Show()
+            else
+                button3:Hide()
+            end
+        end
+
+        self.button1 = sources[1] and ("Use " .. sources[1].label) or nil
+        self.button2 = sources[2] and ("Use " .. sources[2].label) or nil
+        self.button3 = sources[3] and ("Use " .. sources[3].label) or nil
+
+        StaticPopup_Resize(self, "CLICK_TO_CAST_TOOLTIP_BINDING_SOURCE_DETECTED")
     end,
-    OnCancel = function()
-        ClickToCastTooltip.db.global.hasShownCliquePopup = true
-        print("|cff00ff00Click-To-Cast-Tooltip:|r Keeping both Blizzard and Clique bindings enabled.")
+    OnAccept = function(self, data)
+        local sources = data and data.sources or {}
+        if sources[1] then
+            ClickToCastTooltip:ApplyBindingSourceChoice(sources[1].key)
+        end
+    end,
+    OnCancel = function(self, data, reason)
+        local sources = data and data.sources or {}
+        if reason == "clicked" and sources[2] then
+            ClickToCastTooltip:ApplyBindingSourceChoice(sources[2].key)
+        end
+    end,
+    OnAlt = function(self, data)
+        local sources = data and data.sources or {}
+        if sources[3] then
+            ClickToCastTooltip:ApplyBindingSourceChoice(sources[3].key)
+        end
     end,
     timeout = 0,
     whileDead = true,
-    hideOnEscape = true,
+    hideOnEscape = false,
     preferredIndex = 3,
 }
 
-function ClickToCastTooltip:ShowCliquePopup()
-    StaticPopup_Show("CLICK_TO_CAST_TOOLTIP_CLIQUE_DETECTED")
+function ClickToCastTooltip:ShowBindingSourcePopup(sources)
+    local data = {sources = sources}
+    StaticPopup_Show("CLICK_TO_CAST_TOOLTIP_BINDING_SOURCE_DETECTED", nil, nil, data)
 end
 
 SLASH_CLICKTOCASTTT1 = "/clicktocasttooltip"
