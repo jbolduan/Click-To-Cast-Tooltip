@@ -15,6 +15,7 @@ local defaults = {
         showCustomTooltip = true,
         tooltipGridLayout = false,
         tooltipUseMouseButtonIcons = false,
+        tooltipUseSpellIcons = false,
         tooltipTransparency = 0.7,
         tooltipAnchor = 9,
         showBlizzardBindings = true,
@@ -105,6 +106,16 @@ local options = {
                     get = function() return ClickToCastTooltip.db.global.tooltipUseMouseButtonIcons end,
                     set = function(_, val) ClickToCastTooltip.db.global.tooltipUseMouseButtonIcons = val end,
                     order = 2.6,
+                },
+                tooltipUseSpellIcons = {
+                    type = "toggle",
+                    width = "full",
+                    descStyle = "inline",
+                    name = "Use spell icons",
+                    desc = "Show the spell icon instead of the spell name for spell bindings.",
+                    get = function() return ClickToCastTooltip.db.global.tooltipUseSpellIcons end,
+                    set = function(_, val) ClickToCastTooltip.db.global.tooltipUseSpellIcons = val end,
+                    order = 2.7,
                 },
                 showHeader = {
                     type = "toggle",
@@ -581,6 +592,8 @@ local options = {
                     -- Reset main checkboxes
                     ClickToCastTooltip.db.global.showTooltip = true
                     ClickToCastTooltip.db.global.showCustomTooltip = true
+                    ClickToCastTooltip.db.global.tooltipUseMouseButtonIcons = false
+                    ClickToCastTooltip.db.global.tooltipUseSpellIcons = false
                     ClickToCastTooltip.db.global.showHeader = false
                     ClickToCastTooltip.db.global.showFooter = false
                     ClickToCastTooltip.db.global.showNewLineTop = false

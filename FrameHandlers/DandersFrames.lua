@@ -7,12 +7,33 @@ local _, addonTable = ...
 
 local FrameHooker = addonTable.FrameHooker
 
+local function safeTableFieldGet(tbl, key)
+    if type(tbl) ~= "table" then
+        return nil
+    end
+
+    local ok, value = pcall(function()
+        return tbl[key]
+    end)
+
+    if ok then
+        return value
+    end
+
+    return nil
+end
+
 local DandersFramesHandler = {
     name = "DandersFrames",
 
     addonNames = {
         "DandersFrames",
-    }
+    },
+
+    -- Incremental scan controls to avoid long-running global scans in a single frame.
+    dynamicScanInterval = 20,
+    dynamicScanMaxEntries = 300,
+    dynamicScanMaxMs = 4,
 }
 
 --- Checks if DandersFrames is loaded and available
@@ -60,33 +81,50 @@ end
 -- @param tooltipBuilder function: Called on OnEnter
 -- @param tooltipDestroyer function: Called on OnLeave
 function DandersFramesHandler:HookDynamicFrames(tooltipBuilder, tooltipDestroyer)
-    for frameName, frame in pairs(_G) do
-        local canReadHookScript, hookScript = pcall(function()
-            return frame and frame.HookScript
-        end)
+    local processed = 0
+    local cursor = self._dynamicScanCursor
+    local startMs = debugprofilestop and debugprofilestop() or nil
 
-        if type(frameName) == "string" and type(frame) == "table" and canReadHookScript and hookScript then
-            local lowerName = frameName:lower()
-            local isDandersMarked = false
-            local canReadMarker, markerValue = pcall(function()
-                return frame.dfIsDandersFrame
-            end)
-            if canReadMarker and markerValue == true then
-                isDandersMarked = true
-            end
+    while true do
+        local frameName = next(_G, cursor)
+        if frameName == nil then
+            self._dynamicScanCursor = nil
+            return true
+        end
 
-            local isPetFrame = lowerName:find("^dandersframes_pet_") ~= nil
-            local isKnownHeaderChild = lowerName:find("^danderspartyheaderunitbutton") ~= nil
-                or lowerName:find("^dandersarenaheaderunitbutton") ~= nil
-                or lowerName:find("^dandersflatraidheaderunitbutton") ~= nil
-                or lowerName:find("^dandersraidplayerheaderunitbutton") ~= nil
-                or lowerName:find("^dandersraidgroup%d+headerunitbutton") ~= nil
+        cursor = frameName
+        processed = processed + 1
 
-            if isDandersMarked or isPetFrame or isKnownHeaderChild then
-                FrameHooker:HookFrameObject(frame, tooltipBuilder, tooltipDestroyer, false)
+        if type(frameName) == "string" then
+            local isPetFrame = frameName:find("^DandersFrames_Pet_") ~= nil
+            local isKnownHeaderChild = frameName:find("^DandersPartyHeaderUnitButton") ~= nil
+                or frameName:find("^DandersArenaHeaderUnitButton") ~= nil
+                or frameName:find("^DandersFlatRaidHeaderUnitButton") ~= nil
+                or frameName:find("^DandersRaidPlayerHeaderUnitButton") ~= nil
+                or frameName:find("^DandersRaidGroup%d+HeaderUnitButton") ~= nil
+
+            if isPetFrame or isKnownHeaderChild then
+                FrameHooker:HookFrame(frameName, tooltipBuilder, tooltipDestroyer, false)
+            elseif frameName:find("^Danders") ~= nil then
+                local frame = _G[frameName]
+                local isDandersMarked = safeTableFieldGet(frame, "dfIsDandersFrame") == true
+                if isDandersMarked and safeTableFieldGet(frame, "HookScript") then
+                    FrameHooker:HookFrameObject(frame, tooltipBuilder, tooltipDestroyer, false)
+                end
             end
         end
+
+        if processed >= self.dynamicScanMaxEntries then
+            break
+        end
+
+        if startMs and (debugprofilestop() - startMs) >= self.dynamicScanMaxMs then
+            break
+        end
     end
+
+    self._dynamicScanCursor = cursor
+    return false
 end
 
 --- Scans and hooks all DandersFrames unit frames
@@ -110,7 +148,18 @@ function DandersFramesHandler:ScanAndHook(tooltipBuilder, tooltipDestroyer)
     self:HookHeaderChildren(_G["DandersRaidPlayerHeader"], 1, tooltipBuilder, tooltipDestroyer)
 
     -- Fallback for marker-based and pet frame discovery.
-    self:HookDynamicFrames(tooltipBuilder, tooltipDestroyer)
+    -- Keep this incremental to avoid frame hitches from scanning all globals at once.
+    local now = GetTime and GetTime() or 0
+    local shouldRunDynamicScan = self._dynamicScanCursor ~= nil
+        or self._nextDynamicScanAt == nil
+        or now >= self._nextDynamicScanAt
+
+    if shouldRunDynamicScan then
+        local didComplete = self:HookDynamicFrames(tooltipBuilder, tooltipDestroyer)
+        if didComplete then
+            self._nextDynamicScanAt = now + self.dynamicScanInterval
+        end
+    end
 end
 
 -- Register with the handler registry

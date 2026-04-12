@@ -328,6 +328,7 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
     local actionColor = CreateColorFromHexString(db.actionColor or "ff00ff00")
     local gridMode = db.tooltipGridLayout == true
     local useMouseButtonIcons = db.tooltipUseMouseButtonIcons == true
+    local useSpellIcons = db.tooltipUseSpellIcons == true
     local baseFontSize = db.tooltipFontSize or 12
     local iconSize = math.max(10, math.min(24, baseFontSize + 2))
     local useGridFrame = gridMode and tooltip == addonTable.clickCastingTooltip
@@ -359,13 +360,15 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         return nil
     end
 
-    local function addGridAction(buttonText, actionName)
+    local function addGridAction(buttonText, actionName, dedupeKey)
         local slot = classifyMouseButton(buttonText)
         if not slot then return false end
         if not actionName or actionName == "" then return true end
 
-        if not gridSeen[slot][actionName] then
-            gridSeen[slot][actionName] = true
+        local uniqueKey = dedupeKey or actionName
+
+        if not gridSeen[slot][uniqueKey] then
+            gridSeen[slot][uniqueKey] = true
             table.insert(gridBuckets[slot], actionName)
         end
 
@@ -401,19 +404,58 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         return iconForSlot(slot, iconSize) or text
     end
 
-    local function emitStandardLine(buttonText, actionName)
-        local lineText = buttonColor:WrapTextInColorCode(displayButtonText(buttonText)) .. " - " .. actionColor:WrapTextInColorCode(actionName)
+    local function spellIconText(spellIdentifier)
+        if not spellIdentifier then
+            return nil
+        end
+
+        local spellTexture = nil
+        if C_Spell and C_Spell.GetSpellTexture then
+            spellTexture = C_Spell.GetSpellTexture(spellIdentifier)
+        end
+
+        if not spellTexture and C_Spell and C_Spell.GetSpellInfo then
+            local spellInfo = C_Spell.GetSpellInfo(spellIdentifier)
+            spellTexture = spellInfo and spellInfo.iconID or nil
+        end
+
+        if spellTexture then
+            return "|T" .. tostring(spellTexture) .. ":" .. iconSize .. ":" .. iconSize .. ":0:0|t"
+        end
+
+        return nil
+    end
+
+    local function displayActionText(actionName, bindingType, spellIdentifier, forGrid)
+        local textValue = tostring(actionName or "")
+
+        if useSpellIcons and bindingType == "spell" then
+            local iconMarkup = spellIconText(spellIdentifier or textValue)
+            if iconMarkup then
+                return iconMarkup
+            end
+        end
+
+        if forGrid then
+            return textValue
+        end
+
+        return actionColor:WrapTextInColorCode(textValue)
+    end
+
+    local function emitStandardLine(buttonText, actionName, bindingType, spellIdentifier)
+        local lineText = buttonColor:WrapTextInColorCode(displayButtonText(buttonText)) .. " - " .. displayActionText(actionName, bindingType, spellIdentifier, false)
         if lineText:match("%S") then
             nonBlankLineCount.value = nonBlankLineCount.value + 1
             tooltip:AddLine(lineText)
         end
     end
 
-    local function emitBinding(buttonText, actionName)
-        if gridMode and addGridAction(buttonText, actionName) then
+    local function emitBinding(buttonText, actionName, bindingType, spellIdentifier)
+        if gridMode and addGridAction(buttonText, displayActionText(actionName, bindingType, spellIdentifier, true), tostring(actionName or "")) then
             return
         end
-        emitStandardLine(buttonText, actionName)
+        emitStandardLine(buttonText, actionName, bindingType, spellIdentifier)
     end
 
     local function ensureCustomGridFrame(ownerTooltip)
@@ -677,6 +719,8 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
             
             -- Get action name based on binding type
             local actionName = tostring(binding.actionID)
+            local actionBindingType = nil
+            local spellIdentifier = nil
             if binding.type == Enum.ClickBindingType.Interaction then
                 if binding.actionID == Enum.ClickBindingInteraction.Target then
                     actionName = "Target"
@@ -684,11 +728,13 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
                     actionName = "Open Context Menu"
                 end
             elseif binding.type == Enum.ClickBindingType.Spell then
+                actionBindingType = "spell"
                 -- Resolve spec-specific overrides
                 local overrideID = binding.actionID
                 if C_SpellBook and C_SpellBook.FindSpellOverrideByID then
                     overrideID = C_SpellBook.FindSpellOverrideByID(binding.actionID) or binding.actionID
                 end
+                spellIdentifier = overrideID
                 
                 if C_Spell and C_Spell.GetSpellInfo then
                     local spellInfo = C_Spell.GetSpellInfo(overrideID)
@@ -720,7 +766,7 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
                 if not shownBindings[bindingKey] then
                     shownBindings[bindingKey] = true
                     
-                    emitBinding(binding.button, actionName)
+                        emitBinding(binding.button, actionName, actionBindingType, spellIdentifier)
                 end
             end
         end
@@ -747,10 +793,15 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
                 
                 if shouldShow then
                     local actionName = binding.spell or binding.macro or binding.action or "Action"
+                    local actionBindingType = nil
+                    local spellIdentifier = nil
                     if binding.type == "target" then
                         actionName = "Target"
                     elseif binding.type == "menu" then
                         actionName = "Open Menu"
+                    elseif binding.spell then
+                        actionBindingType = "spell"
+                        spellIdentifier = binding.spell
                     end
                     
                     local buttonText = binding.key
@@ -778,7 +829,7 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
                                 displayText = displayText:gsub("ctrl%-", "Ctrl-")
                                 displayText = displayText:gsub("alt%-", "Alt-")
                                 
-                                emitBinding(displayText, actionName)
+                                emitBinding(displayText, actionName, actionBindingType, spellIdentifier)
                             end
                         end
                     end

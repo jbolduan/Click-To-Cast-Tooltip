@@ -8,6 +8,18 @@ local _, addonTable = ...
 addonTable.FrameHooker = {}
 local FrameHooker = addonTable.FrameHooker
 
+local function safeHasHookScript(frame)
+    if type(frame) ~= "table" then
+        return false
+    end
+
+    local ok, hookScript = pcall(function()
+        return frame.HookScript
+    end)
+
+    return ok and hookScript ~= nil
+end
+
 --- Propagates mouse events through health/mana bars to parent frame
 -- @param frame Frame: The unit frame to check for bars
 local function propagateMouseThroughBars(frame)
@@ -46,7 +58,7 @@ end
 -- @param propagateMouse boolean: Whether to propagate mouse through child bars
 -- @return boolean: True if frame was hooked, false otherwise
 function FrameHooker:HookFrameObject(frame, tooltipBuilder, tooltipDestroyer, propagateMouse)
-    if not frame or not frame.HookScript or addonTable.hookedFrames[frame] then
+    if not safeHasHookScript(frame) or addonTable.hookedFrames[frame] then
         return false
     end
     
