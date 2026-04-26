@@ -338,12 +338,16 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         left = {},
         middle = {},
         right = {},
+        wheelup = {},
+        wheeldown = {},
     }
 
     local gridSeen = {
         left = {},
         middle = {},
         right = {},
+        wheelup = {},
+        wheeldown = {},
     }
 
     local function classifyMouseButton(buttonText)
@@ -356,6 +360,10 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
             return "right"
         elseif lower:find("button3") or lower:find("middlebutton") or lower:find("middle click") or lower:find("middleclick") then
             return "middle"
+        elseif lower:find("mousewheelup") or lower:find("mouse wheel up") or lower:find("scrollup") or lower:find("scroll up") then
+            return "wheelup"
+        elseif lower:find("mousewheeldown") or lower:find("mouse wheel down") or lower:find("scrolldown") or lower:find("scroll down") then
+            return "wheeldown"
         end
 
         return nil
@@ -378,11 +386,15 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
 
     local function iconForSlot(slot, size)
         if slot == "left" then
-            return "|TInterface\\Buttons\\UI-SpellbookIcon-PrevPage-Up:" .. size .. ":" .. size .. ":0:0|t"
+            return "|TInterface\\Icons\\misc_arrowleft:" .. size .. ":" .. size .. ":0:0|t"
         elseif slot == "middle" then
             return "|TInterface\\Buttons\\UI-Panel-MinimizeButton-Up:" .. size .. ":" .. size .. ":0:0|t"
         elseif slot == "right" then
-            return "|TInterface\\Buttons\\UI-SpellbookIcon-NextPage-Up:" .. size .. ":" .. size .. ":0:0|t"
+            return "|TInterface\\Icons\\misc_arrowright:" .. size .. ":" .. size .. ":0:0|t"
+        elseif slot == "wheelup" then
+            return "|TInterface\\Icons\\misc_arrowlup:" .. size .. ":" .. size .. ":0:0|t"
+        elseif slot == "wheeldown" then
+            return "|TInterface\\Icons\\misc_arrowdown:" .. size .. ":" .. size .. ":0:0|t"
         end
 
         return nil
@@ -390,6 +402,12 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
 
     local function displayButtonText(buttonText)
         if not useMouseButtonIcons then
+            local lower = tostring(buttonText or ""):lower()
+            if lower:find("mousewheelup") or lower:find("scrollup") then
+                return "Wheel Up"
+            elseif lower:find("mousewheeldown") or lower:find("scrolldown") then
+                return "Wheel Down"
+            end
             return tostring(buttonText)
         end
 
@@ -494,8 +512,15 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
 
     local function emitBinding(buttonText, actionName, bindingType, spellIdentifier)
         local normalizedButton = normalizeBindingButtonText(buttonText)
-        if gridMode and addGridAction(normalizedButton, displayActionText(actionName, bindingType, spellIdentifier, true), tostring(actionName or "")) then
-            return
+        if gridMode then
+            -- Column layout should only show keys that have an actual spell bound.
+            if bindingType == "spell" and actionName and actionName ~= "" then
+                if addGridAction(normalizedButton, displayActionText(actionName, bindingType, spellIdentifier, true), tostring(actionName or "")) then
+                    return
+                end
+            else
+                return
+            end
         end
         emitStandardLine(normalizedButton, actionName, bindingType, spellIdentifier)
     end
@@ -522,6 +547,14 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         frame.rightHeader:SetJustifyH("CENTER")
         frame.rightHeader:SetText("Right")
 
+        frame.wheelUpHeader = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        frame.wheelUpHeader:SetJustifyH("CENTER")
+        frame.wheelUpHeader:SetText("Wheel Up")
+
+        frame.wheelDownHeader = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        frame.wheelDownHeader:SetJustifyH("CENTER")
+        frame.wheelDownHeader:SetText("Wheel Down")
+
         frame.separator = frame:CreateTexture(nil, "BORDER")
         frame.separator:SetColorTexture(0.75, 0.66, 0.32, 0.45)
         frame.separator:SetHeight(1)
@@ -536,6 +569,14 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         frame.colSeparator2:SetColorTexture(0.70, 0.62, 0.30, 0.20)
         frame.colSeparator2:SetWidth(1)
 
+        frame.colSeparator3 = frame:CreateTexture(nil, "BORDER")
+        frame.colSeparator3:SetColorTexture(0.70, 0.62, 0.30, 0.20)
+        frame.colSeparator3:SetWidth(1)
+
+        frame.colSeparator4 = frame:CreateTexture(nil, "BORDER")
+        frame.colSeparator4:SetColorTexture(0.70, 0.62, 0.30, 0.20)
+        frame.colSeparator4:SetWidth(1)
+
         frame.leftBody = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         frame.leftBody:SetJustifyH("CENTER")
         frame.leftBody:SetJustifyV("TOP")
@@ -548,12 +589,20 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         frame.rightBody:SetJustifyH("CENTER")
         frame.rightBody:SetJustifyV("TOP")
 
+        frame.wheelUpBody = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        frame.wheelUpBody:SetJustifyH("CENTER")
+        frame.wheelUpBody:SetJustifyV("TOP")
+
+        frame.wheelDownBody = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        frame.wheelDownBody:SetJustifyH("CENTER")
+        frame.wheelDownBody:SetJustifyV("TOP")
+
         addonTable.gridLayoutFrames[ownerTooltip] = frame
         return frame
     end
 
     local function emitCustomGridFrame()
-        local hasAny = (#gridBuckets.left + #gridBuckets.middle + #gridBuckets.right) > 0
+        local hasAny = (#gridBuckets.left + #gridBuckets.middle + #gridBuckets.right + #gridBuckets.wheelup + #gridBuckets.wheeldown) > 0
         if not hasAny then
             if addonTable.gridLayoutFrames and addonTable.gridLayoutFrames[tooltip] then
                 addonTable.gridLayoutFrames[tooltip]:Hide()
@@ -594,25 +643,37 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         applyFontSize(frame.leftHeader, headerFontSize)
         applyFontSize(frame.middleHeader, headerFontSize)
         applyFontSize(frame.rightHeader, headerFontSize)
+        applyFontSize(frame.wheelUpHeader, headerFontSize)
+        applyFontSize(frame.wheelDownHeader, headerFontSize)
         applyFontSize(frame.leftBody, bodyFontSize)
         applyFontSize(frame.middleBody, bodyFontSize)
         applyFontSize(frame.rightBody, bodyFontSize)
+        applyFontSize(frame.wheelUpBody, bodyFontSize)
+        applyFontSize(frame.wheelDownBody, bodyFontSize)
 
         frame.leftHeader:SetTextColor(rB, gB, bB)
         frame.middleHeader:SetTextColor(rB, gB, bB)
         frame.rightHeader:SetTextColor(rB, gB, bB)
+        frame.wheelUpHeader:SetTextColor(rB, gB, bB)
+        frame.wheelDownHeader:SetTextColor(rB, gB, bB)
 
         frame.leftHeader:SetText(displayHeaderText("left", "Left"))
         frame.middleHeader:SetText(displayHeaderText("middle", "Middle"))
         frame.rightHeader:SetText(displayHeaderText("right", "Right"))
+        frame.wheelUpHeader:SetText(displayHeaderText("wheelup", "Wheel Up"))
+        frame.wheelDownHeader:SetText(displayHeaderText("wheeldown", "Wheel Down"))
 
         frame.leftBody:SetTextColor(rA, gA, bA)
         frame.middleBody:SetTextColor(rA, gA, bA)
         frame.rightBody:SetTextColor(rA, gA, bA)
+        frame.wheelUpBody:SetTextColor(rA, gA, bA)
+        frame.wheelDownBody:SetTextColor(rA, gA, bA)
 
         frame.separator:SetColorTexture(dividerR, dividerG, dividerB, 0.50)
         frame.colSeparator1:SetColorTexture(borderR, borderG, borderB, 0.42)
         frame.colSeparator2:SetColorTexture(borderR, borderG, borderB, 0.42)
+        frame.colSeparator3:SetColorTexture(borderR, borderG, borderB, 0.42)
+        frame.colSeparator4:SetColorTexture(borderR, borderG, borderB, 0.42)
 
         local function bucketBodyText(bucket)
             if #bucket == 0 then
@@ -624,18 +685,26 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         frame.leftBody:SetText(bucketBodyText(gridBuckets.left))
         frame.middleBody:SetText(bucketBodyText(gridBuckets.middle))
         frame.rightBody:SetText(bucketBodyText(gridBuckets.right))
+        frame.wheelUpBody:SetText(bucketBodyText(gridBuckets.wheelup))
+        frame.wheelDownBody:SetText(bucketBodyText(gridBuckets.wheeldown))
 
         -- Clear any previous width constraints so size calculations reflect true content width.
         frame.leftHeader:SetWidth(0)
         frame.middleHeader:SetWidth(0)
         frame.rightHeader:SetWidth(0)
+        frame.wheelUpHeader:SetWidth(0)
+        frame.wheelDownHeader:SetWidth(0)
         frame.leftBody:SetWidth(0)
         frame.middleBody:SetWidth(0)
         frame.rightBody:SetWidth(0)
+        frame.wheelUpBody:SetWidth(0)
+        frame.wheelDownBody:SetWidth(0)
 
         local leftHasContent = #gridBuckets.left > 0
         local middleHasContent = #gridBuckets.middle > 0
         local rightHasContent = #gridBuckets.right > 0
+        local wheelUpHasContent = #gridBuckets.wheelup > 0
+        local wheelDownHasContent = #gridBuckets.wheeldown > 0
 
         local screenWidth = (UIParent and UIParent.GetWidth and UIParent:GetWidth()) or 1920
         local maxColumnWidth = math.max(170, math.floor(screenWidth * 0.28))
@@ -651,12 +720,16 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         local leftW = calcColumnWidth(frame.leftHeader, frame.leftBody, leftHasContent)
         local middleW = calcColumnWidth(frame.middleHeader, frame.middleBody, middleHasContent)
         local rightW = calcColumnWidth(frame.rightHeader, frame.rightBody, rightHasContent)
+        local wheelUpW = calcColumnWidth(frame.wheelUpHeader, frame.wheelUpBody, wheelUpHasContent)
+        local wheelDownW = calcColumnWidth(frame.wheelDownHeader, frame.wheelDownBody, wheelDownHasContent)
 
         local headerRowHeight = math.max(
             headerFontSize + 2,
             frame.leftHeader:GetStringHeight() or 0,
             frame.middleHeader:GetStringHeight() or 0,
             frame.rightHeader:GetStringHeight() or 0,
+            frame.wheelUpHeader:GetStringHeight() or 0,
+            frame.wheelDownHeader:GetStringHeight() or 0,
             useMouseButtonIcons and iconSize or 0
         )
         local headerTopPad = 3
@@ -670,7 +743,9 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         local leftX = innerPad
         local middleX = leftX + leftW + colGap
         local rightX = middleX + middleW + colGap
-        local width = (innerPad * 2) + leftW + middleW + rightW + (colGap * 2)
+        local wheelUpX = rightX + rightW + colGap
+        local wheelDownX = wheelUpX + wheelUpW + colGap
+        local width = (innerPad * 2) + leftW + middleW + rightW + wheelUpW + wheelDownW + (colGap * 4)
 
         frame.leftHeader:ClearAllPoints()
         frame.leftHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", leftX, -headerTopPad)
@@ -681,6 +756,12 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         frame.rightHeader:ClearAllPoints()
         frame.rightHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", rightX, -headerTopPad)
         frame.rightHeader:SetWidth(rightW)
+        frame.wheelUpHeader:ClearAllPoints()
+        frame.wheelUpHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", wheelUpX, -headerTopPad)
+        frame.wheelUpHeader:SetWidth(wheelUpW)
+        frame.wheelDownHeader:ClearAllPoints()
+        frame.wheelDownHeader:SetPoint("TOPLEFT", frame, "TOPLEFT", wheelDownX, -headerTopPad)
+        frame.wheelDownHeader:SetWidth(wheelDownW)
 
         frame.separator:ClearAllPoints()
         frame.separator:SetPoint("TOPLEFT", frame, "TOPLEFT", 2, separatorY)
@@ -690,6 +771,10 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         frame.middleBody:SetPoint("TOPLEFT", frame, "TOPLEFT", middleX, bodyStartY)
         frame.rightBody:ClearAllPoints()
         frame.rightBody:SetPoint("TOPLEFT", frame, "TOPLEFT", rightX, bodyStartY)
+        frame.wheelUpBody:ClearAllPoints()
+        frame.wheelUpBody:SetPoint("TOPLEFT", frame, "TOPLEFT", wheelUpX, bodyStartY)
+        frame.wheelDownBody:ClearAllPoints()
+        frame.wheelDownBody:SetPoint("TOPLEFT", frame, "TOPLEFT", wheelDownX, bodyStartY)
 
         frame.leftBody:ClearAllPoints()
         frame.leftBody:SetPoint("TOPLEFT", frame, "TOPLEFT", leftX, bodyStartY)
@@ -697,6 +782,8 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         frame.leftBody:SetWidth(leftW)
         frame.middleBody:SetWidth(middleW)
         frame.rightBody:SetWidth(rightW)
+        frame.wheelUpBody:SetWidth(wheelUpW)
+        frame.wheelDownBody:SetWidth(wheelDownW)
 
         frame.colSeparator1:ClearAllPoints()
         frame.colSeparator1:SetPoint("TOP", frame, "TOPLEFT", middleX - (colGap / 2), -3)
@@ -706,11 +793,21 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         frame.colSeparator2:SetPoint("TOP", frame, "TOPLEFT", rightX - (colGap / 2), -3)
         frame.colSeparator2:SetPoint("BOTTOM", frame, "BOTTOMLEFT", rightX - (colGap / 2), 3)
 
+        frame.colSeparator3:ClearAllPoints()
+        frame.colSeparator3:SetPoint("TOP", frame, "TOPLEFT", wheelUpX - (colGap / 2), -3)
+        frame.colSeparator3:SetPoint("BOTTOM", frame, "BOTTOMLEFT", wheelUpX - (colGap / 2), 3)
+
+        frame.colSeparator4:ClearAllPoints()
+        frame.colSeparator4:SetPoint("TOP", frame, "TOPLEFT", wheelDownX - (colGap / 2), -3)
+        frame.colSeparator4:SetPoint("BOTTOM", frame, "BOTTOMLEFT", wheelDownX - (colGap / 2), 3)
+
         local bodyHeight = math.max(
             bodyFontSize + 2,
             frame.leftBody:GetStringHeight() or 14,
             frame.middleBody:GetStringHeight() or 14,
-            frame.rightBody:GetStringHeight() or 14
+            frame.rightBody:GetStringHeight() or 14,
+            frame.wheelUpBody:GetStringHeight() or 14,
+            frame.wheelDownBody:GetStringHeight() or 14
         )
 
         local topSectionHeight = (headerTopPad + headerRowHeight + headerBottomPad + bodyTopPad)

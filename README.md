@@ -77,6 +77,7 @@ All settings are available in the options panel. Here’s what you can configure
 - Shadowed Unit Frames (SUF): Player, pet, target, focus, raid, main tank, main assist, and more (e.g., SUFHeaderraidUnitButton1, SUFHeadermaintankUnitButton1, etc.)
 - TukUI: Player, target, focus, pet, party, and raid frames
 - DandersFrames: Party, raid (grouped and flat), arena, and pet frames
+- EllesmereUI: Player, target, focus, pet, target of target, focus target, and boss frames (1-5)
 
 ## Clique Addon Support
 
