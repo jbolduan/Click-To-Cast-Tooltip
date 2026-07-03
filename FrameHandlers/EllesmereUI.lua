@@ -26,6 +26,32 @@ local EllesmereUIHandler = {
     }
 }
 
+local function hookHeaderButtons(headerName, maxButtons, tooltipBuilder, tooltipDestroyer)
+    local header = _G[headerName]
+    if not header then
+        return
+    end
+
+    for i = 1, maxButtons do
+        FrameHooker:HookFrameObject(header[i], tooltipBuilder, tooltipDestroyer, false)
+    end
+end
+
+function EllesmereUIHandler:HookPartyAndRaidFrames(tooltipBuilder, tooltipDestroyer)
+    -- Upstream EllesmereUIRaidFrames globals:
+    -- ERFGroupHeader1..8 (5 units each), ERFFlatHeader (40 units), ERFPartyHeader (5 units),
+    -- plus ERFPartySelfButton, ERFFriendlyBoss1..5 and ERFExtraFrame1..5.
+    for i = 1, 8 do
+        hookHeaderButtons("ERFGroupHeader" .. i, 5, tooltipBuilder, tooltipDestroyer)
+    end
+    hookHeaderButtons("ERFFlatHeader", 40, tooltipBuilder, tooltipDestroyer)
+    hookHeaderButtons("ERFPartyHeader", 5, tooltipBuilder, tooltipDestroyer)
+
+    FrameHooker:HookFrame("ERFPartySelfButton", tooltipBuilder, tooltipDestroyer, false)
+    FrameHooker:HookNumberedFrames("ERFFriendlyBoss%d", 1, 5, tooltipBuilder, tooltipDestroyer, false)
+    FrameHooker:HookNumberedFrames("ERFExtraFrame%d", 1, 5, tooltipBuilder, tooltipDestroyer, false)
+end
+
 --- Checks if EllesmereUI Unit Frames is loaded and available
 -- @return boolean: True if EllesmereUI is detected
 function EllesmereUIHandler:IsEnabled()
@@ -41,6 +67,9 @@ function EllesmereUIHandler:ScanAndHook(tooltipBuilder, tooltipDestroyer)
 
     -- Static frames (player, target, focus, pet, targettarget, focustarget, boss 1-5)
     FrameHooker:HookFrameList(self.staticFrames, tooltipBuilder, tooltipDestroyer, false)
+
+    -- Party and raid frames can vary by Ellesmere layout/version. Hook all matching group frames.
+    self:HookPartyAndRaidFrames(tooltipBuilder, tooltipDestroyer)
 end
 
 -- Register with the handler registry

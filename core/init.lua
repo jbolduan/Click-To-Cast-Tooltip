@@ -206,6 +206,17 @@ function addonTable.getUnitFrameType(frame)
     
     local lowerName = frameName:lower()
     local lowerUnit = unit and unit:lower() or ""
+
+    -- Respect explicit unit tokens first. Some party layouts use raid-style frame names.
+    if lowerUnit:match("^party%d+$") then
+        return "party"
+    end
+    if lowerUnit:match("^raid%d+$") then
+        if not IsInRaid() then
+            return "party"
+        end
+        return "raid"
+    end
     
     -- Check frame name patterns first (more reliable for addon frames)
     -- NPC frames (Cell addon)
@@ -235,6 +246,11 @@ function addonTable.getUnitFrameType(frame)
     end
     
     -- Raid frames (check before party since some raid frames might contain "party" in name)
+    -- Treat compact raid-style party layouts as party when not actually in a raid.
+    if lowerName:find("compactraid") and not IsInRaid() then
+        return "party"
+    end
+
     if lowerName:find("raid") or lowerName:find("compactraidgroup")
        or (unit and unit:match("^raid%d+$")) then
         return "raid"
