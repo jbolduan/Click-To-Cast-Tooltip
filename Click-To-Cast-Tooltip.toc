@@ -1,7 +1,7 @@
-## Interface: 120007
+## Interface: 120100
 ## Title: Click to Cast Tooltip
 ## Author: theGimpboy
-## Version: 3.4.2
+## Version: 3.5.0
 ## Notes: Adds the click to cast spells and macros to the tooltip.
 ## SavedVariables: ClickToCastTooltipDB
 ## X-Website: https://github.com/jbolduan/Click-To-Cast-Tooltip
@@ -32,6 +32,7 @@ FrameHandlers\ElvUI.lua
 FrameHandlers\Cell.lua
 FrameHandlers\CellUnitFrames.lua
 FrameHandlers\Grid2.lua
+FrameHandlers\VuhDo.lua
 FrameHandlers\ShadowedUnitFrames.lua
 FrameHandlers\TukUI.lua
 FrameHandlers\UnhaltedUnitFrames.lua
@@ -42,6 +43,7 @@ FrameHandlers\EllesmereUI.lua
 clickCastingHandlers\Blizzard.lua
 clickCastingHandlers\Clique.lua
 clickCastingHandlers\Cell.lua
+clickCastingHandlers\VuhDo.lua
 
 # Settings and Main
 Click-To-Cast-Tooltip-Settings.lua

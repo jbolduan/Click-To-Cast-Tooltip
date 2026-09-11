@@ -57,7 +57,7 @@ local function clickToCastTooltipBuilder(frame)
     addonTable.clickCastingTooltip:SetPoint(anchor, UIParent, "BOTTOMLEFT", snappedX, snappedY)
     local nonBlankLineCount = {value = 0}
     
-    addonTable.updateTooltip(db, clickBindings, addonTable.clickCastingTooltip, nonBlankLineCount)
+    addonTable.updateTooltip(db, clickBindings, addonTable.clickCastingTooltip, nonBlankLineCount, frame)
     
     if nonBlankLineCount.value > 0 then
         addonTable.frameHandler.init()
@@ -151,7 +151,7 @@ local function blizzardTooltipBuilder(tooltip)
         GameTooltip:AddLine(headerLine)
     end
 
-    addonTable.updateTooltip(db, clickBindings, GameTooltip, nonBlankLineCount)
+    addonTable.updateTooltip(db, clickBindings, GameTooltip, nonBlankLineCount, hookedFrame)
 
     if db and type(db.showFooter) == "boolean" and db.showFooter then
         local dividerColor = CreateColorFromHexString(db.dividerColor)

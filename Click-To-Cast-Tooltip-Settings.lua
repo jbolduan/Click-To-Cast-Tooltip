@@ -21,6 +21,7 @@ local defaults = {
         showBlizzardBindings = true,
         showCliqueBindings = true,
         showCellBindings = true,
+        showVuhDoBindings = true,
         hasShownCliquePopup = false,
         hasShownBindingSourcePopup = false,
         -- Theme settings
@@ -188,6 +189,16 @@ local options = {
                     get = function() return ClickToCastTooltip.db.global.showCellBindings end,
                     set = function(_, val) ClickToCastTooltip.db.global.showCellBindings = val end,
                     order = 8.1,
+                },
+                showVuhDoBindings = {
+                    type = "toggle",
+                    width = "full",
+                    descStyle = "inline",
+                    name = "Show VuhDo addon bindings",
+                    desc = "Show VuhDo click-cast bindings in the tooltip. Only displays when hovering over VuhDo unit frames (requires VuhDo addon).",
+                    get = function() return ClickToCastTooltip.db.global.showVuhDoBindings end,
+                    set = function(_, val) ClickToCastTooltip.db.global.showVuhDoBindings = val end,
+                    order = 8.2,
                 },
                 tooltipTransparency = {
                     type = "range",
@@ -609,6 +620,7 @@ local options = {
                     ClickToCastTooltip.db.global.showBlizzardBindings = true
                     ClickToCastTooltip.db.global.showCliqueBindings = true
                     ClickToCastTooltip.db.global.showCellBindings = true
+                    ClickToCastTooltip.db.global.showVuhDoBindings = true
                     ClickToCastTooltip.db.global.showHeader = false
                     ClickToCastTooltip.db.global.showFooter = false
                     ClickToCastTooltip.db.global.showNewLineTop = false
@@ -713,6 +725,16 @@ local bindingSourceDefinitions = {
             return addonTable.clickBindingHandlers
                 and addonTable.clickBindingHandlers.IsCellAvailable
                 and addonTable.clickBindingHandlers.IsCellAvailable()
+        end,
+    },
+    {
+        key = "vuhdo",
+        label = "VuhDo",
+        toggleKey = "showVuhDoBindings",
+        isAvailable = function()
+            return addonTable.clickBindingHandlers
+                and addonTable.clickBindingHandlers.IsVuhDoAvailable
+                and addonTable.clickBindingHandlers.IsVuhDoAvailable()
         end,
     },
 }

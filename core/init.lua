@@ -335,7 +335,7 @@ addonTable.frameHandler = {
 -- @param clickBindings table: Click binding profile info
 -- @param tooltip GameTooltip: The tooltip frame to update
 -- @param nonBlankLineCount table: Counter object with .value property
-function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
+function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount, hoveredFrame)
     -- Guard against nil tooltip
     if not tooltip then
         return
@@ -866,6 +866,7 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         isShiftKeyDown = IsShiftKeyDown(),
         isAltKeyDown = IsAltKeyDown(),
         isControlKeyDown = IsControlKeyDown(),
+        hoveredFrame = hoveredFrame,
     }
 
     local handlers = addonTable.clickBindingHandlers
@@ -878,6 +879,9 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount)
         end
         if handlers.ProcessCellBindings then
             handlers.ProcessCellBindings(handlerContext)
+        end
+        if handlers.ProcessVuhDoBindings then
+            handlers.ProcessVuhDoBindings(handlerContext)
         end
     end
 
