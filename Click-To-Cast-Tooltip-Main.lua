@@ -16,11 +16,24 @@ addonTable.frameHandler.init()
 -- Tooltip Builder Functions
 -- ============================================================================
 
+local function getCurrentSpecID()
+    if type(GetSpecialization) ~= "function" or type(GetSpecializationInfo) ~= "function" then
+        return nil
+    end
+
+    local specIndex = GetSpecialization()
+    if not specIndex then
+        return nil
+    end
+
+    return GetSpecializationInfo(specIndex)
+end
+
 --- Builds and displays the custom tooltip at the mouse cursor.
 -- @param frame Frame: The unit frame the mouse is over
 local function clickToCastTooltipBuilder(frame)
     local db = ClickToCastTooltip and ClickToCastTooltip.db and ClickToCastTooltip.db.global
-    local specID = GetSpecializationInfo(GetSpecialization())
+    local specID = getCurrentSpecID()
     
     if not (db and type(db.showCustomTooltip) == "boolean" and db.showCustomTooltip) then
         addonTable.clickCastingTooltip:Hide()
@@ -38,6 +51,11 @@ local function clickToCastTooltipBuilder(frame)
         return
     end
     
+    if not addonTable.clickBindingHandlers.IsBlizzardAvailable() then
+        addonTable.clickCastingTooltip:Hide()
+        return
+    end
+
     local clickBindings = C_ClickBindings.GetProfileInfo()
     addonTable.clickCastingTooltip:ClearLines()
     addonTable.clickCastingTooltip:SetOwner(UIParent, "ANCHOR_NONE")
@@ -135,6 +153,10 @@ local function blizzardTooltipBuilder(tooltip)
     
     -- Check if this unit frame type should show the tooltip
     if not addonTable.shouldShowForUnitFrameType(hookedFrame) then
+        return
+    end
+
+    if not addonTable.clickBindingHandlers.IsBlizzardAvailable() then
         return
     end
 

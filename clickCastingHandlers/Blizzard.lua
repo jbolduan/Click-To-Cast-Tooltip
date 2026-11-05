@@ -2,6 +2,19 @@ local _, addonTable = ...
 
 addonTable.clickBindingHandlers = addonTable.clickBindingHandlers or {}
 
+local clickBindingTypeEnum = Enum and Enum.ClickBindingType or {
+    None = 0,
+    Spell = 1,
+    Macro = 2,
+    Interaction = 3,
+    PetAction = 4,
+}
+
+local clickBindingInteractionEnum = Enum and Enum.ClickBindingInteraction or {
+    Target = 1,
+    OpenContextMenu = 2,
+}
+
 function addonTable.clickBindingHandlers.IsBlizzardAvailable()
     return C_ClickBindings and C_ClickBindings.GetProfileInfo ~= nil
 end
@@ -21,13 +34,13 @@ function addonTable.clickBindingHandlers.ProcessBlizzardBindings(context)
         local actionBindingType = nil
         local spellIdentifier = nil
 
-        if binding.type == Enum.ClickBindingType.Interaction then
-            if binding.actionID == Enum.ClickBindingInteraction.Target then
+        if binding.type == clickBindingTypeEnum.Interaction then
+            if binding.actionID == clickBindingInteractionEnum.Target then
                 actionName = "Target"
-            elseif binding.actionID == Enum.ClickBindingInteraction.OpenContextMenu then
+            elseif binding.actionID == clickBindingInteractionEnum.OpenContextMenu then
                 actionName = "Open Context Menu"
             end
-        elseif binding.type == Enum.ClickBindingType.Spell then
+        elseif binding.type == clickBindingTypeEnum.Spell then
             actionBindingType = "spell"
             local overrideID = binding.actionID
             if C_SpellBook and C_SpellBook.FindSpellOverrideByID then
@@ -43,7 +56,7 @@ function addonTable.clickBindingHandlers.ProcessBlizzardBindings(context)
             if actionName == tostring(binding.actionID) and C_Spell and C_Spell.GetSpellName then
                 actionName = C_Spell.GetSpellName(overrideID)
             end
-        elseif binding.type == Enum.ClickBindingType.Macro then
+        elseif binding.type == clickBindingTypeEnum.Macro then
             actionName = GetMacroInfo(binding.actionID) or "Macro"
         end
 

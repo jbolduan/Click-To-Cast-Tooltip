@@ -44,6 +44,9 @@ function BlizzardHandler:ScanAndHook(tooltipBuilder, tooltipDestroyer)
     
     -- Compact Party Frames
     FrameHooker:HookNumberedFrames("CompactPartyFrameMember%d", 1, 5, tooltipBuilder, tooltipDestroyer, false)
+
+    -- World of Warcraft: Forever and compact UI variants often expose raid members via generic CompactRaidFrameN names.
+    FrameHooker:HookNumberedFrames("CompactRaidFrame%d", 1, 40, tooltipBuilder, tooltipDestroyer, false)
     
     -- Boss Frames
     FrameHooker:HookNumberedFrames("Boss%dTargetFrame", 1, 10, tooltipBuilder, tooltipDestroyer, false)
