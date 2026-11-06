@@ -25,4 +25,4 @@ jobs:
               uses: actions/checkout@v5
         
             - name: Package and Publish
-              uses: BigWigsMods/packager@v2.4.3
+              uses: BigWigsMods/packager@v2
