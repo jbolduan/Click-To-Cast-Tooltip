@@ -866,6 +866,7 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount,
         isShiftKeyDown = IsShiftKeyDown(),
         isAltKeyDown = IsAltKeyDown(),
         isControlKeyDown = IsControlKeyDown(),
+        isMetaKeyDown = type(_G.IsMetaKeyDown) == "function" and _G.IsMetaKeyDown() or false,
         hoveredFrame = hoveredFrame,
     }
 
@@ -882,6 +883,9 @@ function addonTable.updateTooltip(db, clickBindings, tooltip, nonBlankLineCount,
         end
         if handlers.ProcessVuhDoBindings then
             handlers.ProcessVuhDoBindings(handlerContext)
+        end
+        if handlers.ProcessEllesmereUIBindings then
+            handlers.ProcessEllesmereUIBindings(handlerContext)
         end
     end
 

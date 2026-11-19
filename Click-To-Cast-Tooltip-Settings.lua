@@ -22,6 +22,7 @@ local defaults = {
         showCliqueBindings = true,
         showCellBindings = true,
         showVuhDoBindings = true,
+        showEllesmereUIBindings = true,
         hasShownCliquePopup = false,
         hasShownBindingSourcePopup = false,
         -- Theme settings
@@ -199,6 +200,16 @@ local options = {
                     get = function() return ClickToCastTooltip.db.global.showVuhDoBindings end,
                     set = function(_, val) ClickToCastTooltip.db.global.showVuhDoBindings = val end,
                     order = 8.2,
+                },
+                showEllesmereUIBindings = {
+                    type = "toggle",
+                    width = "full",
+                    descStyle = "inline",
+                    name = "Show EllesmereUI addon bindings",
+                    desc = "Show EllesmereUI click-cast bindings in the tooltip when hovering over EllesmereUI unit frames (requires EllesmereUI Raid & Party Frames).",
+                    get = function() return ClickToCastTooltip.db.global.showEllesmereUIBindings end,
+                    set = function(_, val) ClickToCastTooltip.db.global.showEllesmereUIBindings = val end,
+                    order = 8.3,
                 },
                 tooltipTransparency = {
                     type = "range",
@@ -621,6 +632,7 @@ local options = {
                     ClickToCastTooltip.db.global.showCliqueBindings = true
                     ClickToCastTooltip.db.global.showCellBindings = true
                     ClickToCastTooltip.db.global.showVuhDoBindings = true
+                    ClickToCastTooltip.db.global.showEllesmereUIBindings = true
                     ClickToCastTooltip.db.global.showHeader = false
                     ClickToCastTooltip.db.global.showFooter = false
                     ClickToCastTooltip.db.global.showNewLineTop = false
@@ -737,6 +749,16 @@ local bindingSourceDefinitions = {
                 and addonTable.clickBindingHandlers.IsVuhDoAvailable()
         end,
     },
+    {
+        key = "ellesmereui",
+        label = "EllesmereUI",
+        toggleKey = "showEllesmereUIBindings",
+        isAvailable = function()
+            return addonTable.clickBindingHandlers
+                and addonTable.clickBindingHandlers.IsEllesmereUIAvailable
+                and addonTable.clickBindingHandlers.IsEllesmereUIAvailable()
+        end,
+    },
 }
 
 function ClickToCastTooltip:GetDetectedBindingSources()
@@ -798,13 +820,15 @@ StaticPopupDialogs["CLICK_TO_CAST_TOOLTIP_BINDING_SOURCE_DETECTED"] = {
     button3 = "Option 3",
     OnShow = function(self, data)
         local sources = data and data.sources or {}
+        local startIndex = data and data.startIndex or 1
+        local hasMore = #sources - startIndex + 1 > 3
         local button1 = _G[self:GetName() .. "Button1"]
         local button2 = _G[self:GetName() .. "Button2"]
         local button3 = _G[self:GetName() .. "Button3"]
 
         if button1 then
-            if sources[1] then
-                button1:SetText("Use " .. sources[1].label)
+            if sources[startIndex] then
+                button1:SetText("Use " .. sources[startIndex].label)
                 button1:Show()
             else
                 button1:Hide()
@@ -812,8 +836,8 @@ StaticPopupDialogs["CLICK_TO_CAST_TOOLTIP_BINDING_SOURCE_DETECTED"] = {
         end
 
         if button2 then
-            if sources[2] then
-                button2:SetText("Use " .. sources[2].label)
+            if sources[startIndex + 1] then
+                button2:SetText("Use " .. sources[startIndex + 1].label)
                 button2:Show()
             else
                 button2:Hide()
@@ -821,36 +845,47 @@ StaticPopupDialogs["CLICK_TO_CAST_TOOLTIP_BINDING_SOURCE_DETECTED"] = {
         end
 
         if button3 then
-            if sources[3] then
-                button3:SetText("Use " .. sources[3].label)
+            if hasMore then
+                button3:SetText("More...")
+                button3:Show()
+            elseif sources[startIndex + 2] then
+                button3:SetText("Use " .. sources[startIndex + 2].label)
                 button3:Show()
             else
                 button3:Hide()
             end
         end
 
-        self.button1 = sources[1] and ("Use " .. sources[1].label) or nil
-        self.button2 = sources[2] and ("Use " .. sources[2].label) or nil
-        self.button3 = sources[3] and ("Use " .. sources[3].label) or nil
+        self.button1 = sources[startIndex] and ("Use " .. sources[startIndex].label) or nil
+        self.button2 = sources[startIndex + 1] and ("Use " .. sources[startIndex + 1].label) or nil
+        self.button3 = hasMore and "More..."
+            or (sources[startIndex + 2] and ("Use " .. sources[startIndex + 2].label) or nil)
 
-        StaticPopup_Resize(self, "CLICK_TO_CAST_TOOLTIP_BINDING_SOURCE_DETECTED")
+        self:Resize()
     end,
     OnAccept = function(self, data)
         local sources = data and data.sources or {}
-        if sources[1] then
-            ClickToCastTooltip:ApplyBindingSourceChoice(sources[1].key)
+        local startIndex = data and data.startIndex or 1
+        if sources[startIndex] then
+            ClickToCastTooltip:ApplyBindingSourceChoice(sources[startIndex].key)
         end
     end,
     OnCancel = function(self, data, reason)
         local sources = data and data.sources or {}
-        if reason == "clicked" and sources[2] then
-            ClickToCastTooltip:ApplyBindingSourceChoice(sources[2].key)
+        local startIndex = data and data.startIndex or 1
+        if reason == "clicked" and sources[startIndex + 1] then
+            ClickToCastTooltip:ApplyBindingSourceChoice(sources[startIndex + 1].key)
         end
     end,
     OnAlt = function(self, data)
         local sources = data and data.sources or {}
-        if sources[3] then
-            ClickToCastTooltip:ApplyBindingSourceChoice(sources[3].key)
+        local startIndex = data and data.startIndex or 1
+        if #sources - startIndex + 1 > 3 then
+            C_Timer.After(0.1, function()
+                ClickToCastTooltip:ShowBindingSourcePopup(sources, startIndex + 2)
+            end)
+        elseif sources[startIndex + 2] then
+            ClickToCastTooltip:ApplyBindingSourceChoice(sources[startIndex + 2].key)
         end
     end,
     timeout = 0,
@@ -859,8 +894,8 @@ StaticPopupDialogs["CLICK_TO_CAST_TOOLTIP_BINDING_SOURCE_DETECTED"] = {
     preferredIndex = 3,
 }
 
-function ClickToCastTooltip:ShowBindingSourcePopup(sources)
-    local data = {sources = sources}
+function ClickToCastTooltip:ShowBindingSourcePopup(sources, startIndex)
+    local data = {sources = sources, startIndex = startIndex or 1}
     StaticPopup_Show("CLICK_TO_CAST_TOOLTIP_BINDING_SOURCE_DETECTED", nil, nil, data)
 end
 
